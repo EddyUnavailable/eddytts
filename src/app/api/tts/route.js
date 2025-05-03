@@ -1,5 +1,5 @@
 import fs from 'fs';
-import fsPromises from 'fs/promises'; // Use this for promise-based methods, like writeFile
+import fsPromises from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { google } from 'googleapis';
@@ -25,6 +25,7 @@ export async function POST(req) {
       pitch = 0,
       speakingRate = 1.0,
       volumeGain = 0.0,
+      playWithoutSaving = false, // New flag to play without saving
     } = body;
 
     const ttsClient = getTTSClient();
@@ -45,6 +46,15 @@ export async function POST(req) {
     // Save the audio file locally
     await fsPromises.writeFile(outputPath, ttsResponse.audioContent, 'binary');
     console.log('✅ Audio file written to:', outputPath);
+
+    if (playWithoutSaving) {
+      // Return the audio as Base64 without saving to Google Drive
+      const audioBase64 = ttsResponse.audioContent.toString('base64');
+      return NextResponse.json({
+        message: 'Audio generated successfully.',
+        audioBase64,
+      });
+    }
 
     // Upload file to Google Drive
     const auth = new google.auth.GoogleAuth({

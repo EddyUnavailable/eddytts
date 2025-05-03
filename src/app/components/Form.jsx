@@ -58,7 +58,24 @@ const Form = ({
           onChange={(e) => setText(e.target.value)}
           placeholder="Enter text here..."
           required
+          aria-describedby="text-input-desc"
         />
+        <small id="text-input-desc">Enter the text to convert to speech.</small>
+      </div>
+
+      {/* Play Without Saving */}
+      <div>
+        <label htmlFor="play-without-saving">
+          <strong>Play Without Saving:</strong>
+        </label>
+        <input
+          id="play-without-saving"
+          type="checkbox"
+          checked={playWithoutSaving}
+          onChange={(e) => setPlayWithoutSaving(e.target.checked)}
+          aria-describedby="play-without-saving-desc"
+        />
+        <small id="play-without-saving-desc">Option to listen to the generated audio without saving it.</small>
       </div>
 
       {/* Use SSML */}

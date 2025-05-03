@@ -62,37 +62,53 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   }, [languageCode, voices]);
 
   // Handle voice selection change
-  const handleVoiceChange = (voiceName) => {
-    setSelectedVoice(voiceName); // Update the selected voice in state
+  const handleVoiceChange = async (voiceName) => {
+    console.log('Changing voice to:', voiceName); // Debugging
+    setPreviewAudio(''); // Clear previous preview audio
+    setSelectedVoice(voiceName); // Update state for selected voice
+
+    // Wait 1 second before triggering the preview
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Trigger the preview after ensuring the state is updated
+    handlePreview(voiceName);
   };
 
-  const handlePreview = async () => {
-    if (!selectedVoice) {
+  const handlePreview = async (previewVoice = selectedVoice) => {
+    // Ensure previewVoice is a string
+    const voiceToPreview = typeof previewVoice === 'string' ? previewVoice.trim() : selectedVoice.trim();
+  
+    console.log('Previewing voice:', voiceToPreview); // Debugging
+    if (!voiceToPreview) {
       return alert('Please select a voice!');
     }
-
-    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
-
+  
+    const selectedVoiceObj = voices.find(
+      (voice) => voice.name.trim() === voiceToPreview
+    );
+  
     if (!selectedVoiceObj) {
+      console.error('Voice not found in list:', voiceToPreview); // Debugging
       return alert('Invalid voice selection.');
     }
-
+  
+    console.log('Selected voice object:', selectedVoiceObj); // Debugging
     const correctLanguageCode = selectedVoiceObj.languageCodes[0];
-
+  
     setLoading(true);
-
+  
     try {
       const response = await fetch(`${apiEndpoint}/preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          voice: selectedVoice,
+          voice: voiceToPreview,
           languageCode: correctLanguageCode,
         }),
       });
-
+  
       if (!response.ok) throw new Error('Failed to generate preview');
-
+  
       const data = await response.json();
       setPreviewAudio(data.audioBase64 || '');
     } catch (error) {
@@ -108,9 +124,12 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
       return alert('Please select a voice!');
     }
 
-    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
+    const selectedVoiceObj = voices.find(
+      (voice) => voice.name.trim() === selectedVoice.trim()
+    );
 
     if (!selectedVoiceObj) {
+      console.error('Voice not found in list:', selectedVoice); // Debugging
       return alert('Invalid voice selection.');
     }
 
@@ -122,7 +141,11 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...requestBody, languageCode: correctLanguageCode, voice: selectedVoice }),
+        body: JSON.stringify({
+          ...requestBody,
+          languageCode: correctLanguageCode,
+          voice: selectedVoice,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to generate speech');
