@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { Storage } from '@google-cloud/storage';
+import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 import { getTTSClient, validateTTSRequest, generateFileName } from './utils';
 
@@ -45,23 +45,36 @@ export async function POST(req) {
     await fs.writeFile(outputPath, ttsResponse.audioContent, 'binary');
     console.log('✅ Audio file written to:', outputPath);
 
-    // Upload file to Google Cloud Storage
-    const storage = new Storage({ keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS });
-    const bucketName = '1bmwWFNEhI-ODs3r9Qh_MXEkThggWQss9'; // Replace with your bucket name
-    const fileName = path.basename(outputPath);
+    // Upload file to Google Drive
+    const auth = new google.auth.GoogleAuth({
+      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+    });
+    const drive = google.drive({ version: 'v3', auth });
 
-    await storage.bucket(bucketName).upload(outputPath, {
-      destination: `tts-audio/${fileName}`, // Path inside the bucket
-      public: true, // Make the file publicly accessible
+    const fileMetadata = {
+      name: path.basename(outputPath),
+      parents: ['1bmwWFNEhI-ODs3r9Qh_MXEkThggWQss9'], // Google Drive folder ID
+    };
+    const media = {
+      mimeType: 'audio/mpeg',
+      body: await fs.readFile(outputPath), // Read the file content
+    };
+
+    const response = await drive.files.create({
+      resource: fileMetadata,
+      media,
+      fields: 'id, webViewLink, webContentLink',
     });
 
-    const publicUrl = `https://storage.googleapis.com/${bucketName}/tts-audio/${fileName}`;
-    console.log('🌐 Public URL:', publicUrl);
+    console.log('🌐 File uploaded to Google Drive:', response.data);
 
     // Return the public URL to the client
     return NextResponse.json({
       message: 'Audio generated successfully.',
-      audioUrl: publicUrl,
+      fileId: response.data.id,
+      webViewLink: response.data.webViewLink,
+      webContentLink: response.data.webContentLink,
     });
   } catch (error) {
     console.error('❌ Error in /api/tts:', error);
