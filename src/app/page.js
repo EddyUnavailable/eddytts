@@ -3,6 +3,7 @@ import styles from "./page.module.css";
 import React from 'react';
 import Link from 'next/link';
 import TextToSpeech from './components/TextToSpeech';
+require('dotenv').config();
 
 export default function HomePage() {
   return (

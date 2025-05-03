@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import textToSpeech from '@google-cloud/text-to-speech';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { NextResponse } from 'next/server';
@@ -8,13 +8,24 @@ import { NextResponse } from 'next/server';
 // Define the folder where temporary files will be stored
 const TEMP_DIR = os.tmpdir();
 
-// Ensure the temporary directory exists
-if (!fs.existsSync(TEMP_DIR)) {
-  fs.mkdirSync(TEMP_DIR);
-}
-
 // Helper function to generate a unique file name
 const generateFileName = (extension = 'mp3') => `output-${Date.now()}.${extension}`;
+
+// Helper function to initialize the Google TTS client
+const getTTSClient = () => {
+  const keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!keyFilename) {
+    throw new Error('GOOGLE_APPLICATION_CREDENTIALS environment variable is not set.');
+  }
+  return new textToSpeech.TextToSpeechClient({ keyFilename });
+};
+
+// Helper function to filter English-speaking voices
+const filterEnglishVoices = (voices) => {
+  return voices.filter((voice) =>
+    voice.languageCodes.some((code) => ['en-US', 'en-GB', 'en-AU'].includes(code))
+  );
+};
 
 // Endpoint to handle TTS requests
 export async function POST(req) {
@@ -45,12 +56,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid audio format.' }, { status: 400 });
     }
 
-    console.log('🎤 Converting text:', text);
-
-    // Google Text-to-Speech API setup
-    const ttsClient = new textToSpeech.TextToSpeechClient({
-      keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    });
+    const ttsClient = getTTSClient();
 
     // Prepare the TTS request
     const ttsRequest = {
@@ -77,7 +83,7 @@ export async function POST(req) {
     }
 
     // Save the audio file locally
-    fs.writeFileSync(outputPath, ttsResponse.audioContent, 'binary');
+    await fs.writeFile(outputPath, ttsResponse.audioContent, 'binary');
     console.log('✅ Audio file written to:', outputPath);
 
     // Return the file path for download
@@ -89,8 +95,10 @@ export async function POST(req) {
     console.error('❌ Error in /api/tts:', error);
 
     // Clean up the temporary file if it exists
-    if (fs.existsSync(outputPath)) {
-      fs.unlinkSync(outputPath);
+    try {
+      await fs.unlink(outputPath);
+    } catch {
+      // Ignore errors during cleanup
     }
 
     return NextResponse.json(
@@ -106,9 +114,9 @@ export async function GET() {
     console.log('📥 GET /api/tts/voices received');
 
     const ttsClient = new textToSpeech.TextToSpeechClient({
-      keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+      keyFilename: '/home/eddy/workshop/server/keyfile.json',
     });
-
+    console.log('GOOGLE_APPLICATION_CREDENTIALS:', process.env.GOOGLE_APPLICATION_CREDENTIALS);
     // Fetch available voices
     const [response] = await ttsClient.listVoices();
 
@@ -128,24 +136,22 @@ export async function GET() {
 }
 
 // Endpoint to provide voice previews
-export async function PREVIEW() {
+export async function PREVIEW(req) {
   try {
     console.log('📥 PREVIEW /api/tts/preview received');
 
-    const ttsClient = new textToSpeech.TextToSpeechClient({
-      keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-    });
+    const ttsClient = getTTSClient();
+    const body = await req.json();
+    const { text = 'This is a voice preview.' } = body;
 
     const [response] = await ttsClient.listVoices();
-    const englishVoices = response.voices.filter((voice) =>
-      voice.languageCodes.some((code) => ['en-US', 'en-GB', 'en-AU'].includes(code))
-    );
+    const englishVoices = filterEnglishVoices(response.voices);
 
     // Generate previews for each voice
     const previews = await Promise.all(
       englishVoices.map(async (voice) => {
         const ttsRequest = {
-          input: { text: 'This is a voice preview.' },
+          input: { text },
           voice: { languageCode: voice.languageCodes[0], name: voice.name },
           audioConfig: { audioEncoding: 'MP3' },
         };
