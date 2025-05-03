@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Form from './Form';
-import VoicePreview from './VoicePreview';
+import AudioPreview from './AudioPreview';
 import GeneratedAudio from './GeneratedAudio';
 import Loader from './Loader';
 
@@ -19,9 +19,7 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   const [sampleRate, setSampleRate] = useState(24000);
   const [playWithoutSaving, setPlayWithoutSaving] = useState(false);
   const [useSSML, setUseSSML] = useState(false);
-  const [audioPath, setAudioPath] = useState('');
-  const [audioBase64, setAudioBase64] = useState('');
-  const [previewAudio, setPreviewAudio] = useState('');
+  const [audioSamples, setAudioSamples] = useState([]); // Array of audio samples
   const [loading, setLoading] = useState(false);
 
   // Fetch available voices on mount
@@ -62,71 +60,19 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   }, [languageCode, voices]);
 
   // Handle voice selection change
-  const handleVoiceChange = async (voiceName) => {
-    console.log('Changing voice to:', voiceName); // Debugging
-    setPreviewAudio(''); // Clear previous preview audio
-    setSelectedVoice(voiceName); // Update state for selected voice
-
-    // Wait 1 second before triggering the preview
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    // Trigger the preview after ensuring the state is updated
-    handlePreview(voiceName);
+  const handleVoiceChange = (voiceName) => {
+    setSelectedVoice(voiceName); // Update the selected voice in state
   };
 
-  const handlePreview = async (previewVoice = selectedVoice) => {
-    // Ensure previewVoice is a string
-    const voiceToPreview = typeof previewVoice === 'string' ? previewVoice.trim() : selectedVoice.trim();
-  
-    console.log('Previewing voice:', voiceToPreview); // Debugging
-    if (!voiceToPreview) {
-      return alert('Please select a voice!');
-    }
-  
-    const selectedVoiceObj = voices.find(
-      (voice) => voice.name.trim() === voiceToPreview
-    );
-  
-    if (!selectedVoiceObj) {
-      console.error('Voice not found in list:', voiceToPreview); // Debugging
-      return alert('Invalid voice selection.');
-    }
-  
-    console.log('Selected voice object:', selectedVoiceObj); // Debugging
-    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
-  
-    setLoading(true);
-  
-    try {
-      const response = await fetch(`${apiEndpoint}/preview`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          voice: voiceToPreview,
-          languageCode: correctLanguageCode,
-        }),
-      });
-  
-      if (!response.ok) throw new Error('Failed to generate preview');
-  
-      const data = await response.json();
-      setPreviewAudio(data.audioBase64 || '');
-    } catch (error) {
-      console.error('Error generating preview:', error);
-      alert('Error generating preview: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle TTS submission
   const handleSubmit = async (requestBody) => {
+    console.log('Submitting TTS request with:', { selectedVoice, languageCode, text }); // Debugging
+
     if (!selectedVoice) {
       return alert('Please select a voice!');
     }
 
-    const selectedVoiceObj = voices.find(
-      (voice) => voice.name.trim() === selectedVoice.trim()
-    );
+    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
 
     if (!selectedVoiceObj) {
       console.error('Voice not found in list:', selectedVoice); // Debugging
@@ -143,19 +89,47 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...requestBody,
+          text, // Include the text for TTS
           languageCode: correctLanguageCode,
           voice: selectedVoice,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate speech');
+      if (!response.ok) {
+        console.error('TTS API returned an error:', response.statusText); // Debugging
+        throw new Error('Failed to generate speech');
+      }
 
       const data = await response.json();
 
+      console.log('TTS API response:', data); // Debugging
+
       if (requestBody.playWithoutSaving) {
-        setAudioBase64(data.audioBase64 || '');
+        if (!data.audioBase64) {
+          throw new Error('Missing audioBase64 in API response');
+        }
+
+        const newSample = {
+          id: Date.now(),
+          base64: data.audioBase64,
+          path: null,
+        };
+
+        // Add the new sample to the list of audio samples
+        setAudioSamples((prevSamples) => [...prevSamples, newSample]);
       } else {
-        setAudioPath(data.link || '');
+        if (!data.link) {
+          throw new Error('Missing link in API response');
+        }
+
+        const newSample = {
+          id: Date.now(),
+          base64: null,
+          path: data.link,
+        };
+
+        // Add the new sample to the list of audio samples
+        setAudioSamples((prevSamples) => [...prevSamples, newSample]);
       }
     } catch (error) {
       console.error('Error generating speech:', error);
@@ -192,17 +166,16 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         setPlayWithoutSaving={setPlayWithoutSaving}
         useSSML={useSSML}
         setUseSSML={setUseSSML}
-        handleSubmit={handleSubmit}
+        handleSubmit={handleSubmit} // Correctly pass handleSubmit
         loading={loading}
-        handlePreview={handlePreview}
       />
       {loading && <Loader />}
-      <VoicePreview previewAudio={previewAudio} />
-      <GeneratedAudio
-        playWithoutSaving={playWithoutSaving}
-        audioBase64={audioBase64}
-        audioPath={audioPath}
+      <AudioPreview
+        selectedVoice={selectedVoice}
+        voices={voices}
+        apiEndpoint={apiEndpoint}
       />
+      <GeneratedAudio audioSamples={audioSamples} onDelete={() => {}} />
     </div>
   );
 };
