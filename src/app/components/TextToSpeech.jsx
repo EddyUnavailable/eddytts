@@ -9,6 +9,7 @@ const TextToSpeech = ({ apiEndpoint = '../api/tts' }) => {
   const [text, setText] = useState('');
   const [languageCode, setLanguageCode] = useState('en-US');
   const [voices, setVoices] = useState([]);
+  const [filteredVoices, setFilteredVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState('');
   const [gender, setGender] = useState('NEUTRAL');
   const [speakingRate, setSpeakingRate] = useState(1.0);
@@ -31,8 +32,13 @@ const TextToSpeech = ({ apiEndpoint = '../api/tts' }) => {
         if (!response.ok) throw new Error('Failed to fetch voices');
 
         const data = await response.json();
-        setVoices(data.voices || []);
-        setSelectedVoice(data.voices[0]?.name || '');
+
+        // Filter out premium voices (e.g., Chirp and Wavenet)
+        const filtered = data.voices.filter(
+          (voice) => !voice.name.includes('Chirp') && !voice.name.includes('Wavenet')
+        );
+
+        setVoices(filtered || []);
       } catch (error) {
         alert('Error fetching voices: ' + error.message);
       }
@@ -41,16 +47,49 @@ const TextToSpeech = ({ apiEndpoint = '../api/tts' }) => {
     fetchVoices();
   }, [apiEndpoint]);
 
+  // Filter voices whenever the languageCode changes
+  useEffect(() => {
+    const filtered = voices.filter((voice) =>
+      voice.languageCodes.includes(languageCode)
+    );
+    setFilteredVoices(filtered);
+    if (filtered.length > 0) {
+      setSelectedVoice(filtered[0]?.name || ''); // Automatically select the first matching voice
+    }
+  }, [languageCode, voices]);
+
+  // Handle voice selection change
+  const handleVoiceChange = (voiceName) => {
+    setSelectedVoice(voiceName); // Update the selected voice in state
+  };
+
   const handlePreview = async () => {
-    if (!selectedVoice) return alert('Please select a voice!');
+    if (!selectedVoice) {
+      return alert('Please select a voice!');
+    }
+
+    // Find the selected voice object
+    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
+
+    if (!selectedVoiceObj) {
+      return alert('Invalid voice selection.');
+    }
+
+    // Use the correct languageCode for the selected voice
+    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
+
     setLoading(true);
 
     try {
       const response = await fetch(`${apiEndpoint}/preview`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voice: selectedVoice }),
+        body: JSON.stringify({
+          voice: selectedVoice,
+          languageCode: correctLanguageCode,
+        }),
       });
+
       if (!response.ok) throw new Error('Failed to generate preview');
 
       const data = await response.json();
@@ -63,16 +102,31 @@ const TextToSpeech = ({ apiEndpoint = '../api/tts' }) => {
   };
 
   const handleSubmit = async (requestBody) => {
+    if (!selectedVoice) {
+      return alert('Please select a voice!');
+    }
+
+    // Find the selected voice object
+    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
+
+    if (!selectedVoiceObj) {
+      return alert('Invalid voice selection.');
+    }
+
+    // Use the correct languageCode for the selected voice
+    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
+
     setLoading(true);
 
     try {
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ ...requestBody, languageCode: correctLanguageCode, voice: selectedVoice }),
       });
 
       if (!response.ok) throw new Error('Failed to generate speech');
+
       const data = await response.json();
 
       if (requestBody.playWithoutSaving) {
@@ -95,9 +149,9 @@ const TextToSpeech = ({ apiEndpoint = '../api/tts' }) => {
         setText={setText}
         languageCode={languageCode}
         setLanguageCode={setLanguageCode}
-        voices={voices}
+        voices={filteredVoices} // Use filtered voices here
         selectedVoice={selectedVoice}
-        setSelectedVoice={setSelectedVoice}
+        setSelectedVoice={handleVoiceChange} // Pass the handler for changing voices
         gender={gender}
         setGender={setGender}
         speakingRate={speakingRate}

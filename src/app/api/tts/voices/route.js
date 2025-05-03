@@ -60,10 +60,10 @@ export async function POST(req) {
 
     // Prepare the TTS request
     const ttsRequest = {
-      input: ssml ? { ssml: text } : { text },
-      voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
+      input: { text: 'This is a voice preview.' }, // Sample text for preview
+      voice: { name: voice, languageCode },       // Use the provided voice and languageCode
       audioConfig: {
-        audioEncoding: format,
+        audioEncoding: 'MP3',
         sampleRateHertz,
         pitch,
         speakingRate,

@@ -35,11 +35,11 @@ const Form = ({
       languageCode,
       name: selectedVoice,
       gender,
-      speakingRate: parseFloat(speakingRate),
-      pitch: parseFloat(pitch),
-      volumeGainDb: parseFloat(volumeGainDb),
+      speakingRate: parseFloat(speakingRate) || 1.0, // Fallback to default
+      pitch: parseFloat(pitch) || 0, // Fallback to default
+      volumeGainDb: parseFloat(volumeGainDb) || 0, // Fallback to default
       format: audioFormat,
-      sampleRateHertz: parseInt(sampleRate, 10),
+      sampleRateHertz: parseInt(sampleRate, 10) || 24000, // Fallback to default
       playWithoutSaving,
       ssml: useSSML,
     });
@@ -47,61 +47,133 @@ const Form = ({
 
   return (
     <form onSubmit={submitForm}>
+      {/* Text Input */}
       <div>
-        <label>
+        <label htmlFor="text-input">
           <strong>Text:</strong>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Enter text here..."
-            required
-          />
         </label>
+        <textarea
+          id="text-input"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Enter text here..."
+          required
+        />
       </div>
+
+      {/* Use SSML */}
       <div>
-        <label>
+        <label htmlFor="use-ssml">
           <strong>Use SSML:</strong>
-          <input
-            type="checkbox"
-            checked={useSSML}
-            onChange={(e) => setUseSSML(e.target.checked)}
-          />
         </label>
+        <input
+          id="use-ssml"
+          type="checkbox"
+          checked={useSSML}
+          onChange={(e) => setUseSSML(e.target.checked)}
+        />
       </div>
+
+      {/* Language Code Selection */}
       <div>
-        <label>
+        <label htmlFor="language-code">
           <strong>Language Code:</strong>
-          <select
-            value={languageCode}
-            onChange={(e) => setLanguageCode(e.target.value)}
-          >
-            <option value="en-US">English (US)</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="en-AU">English (AU)</option>
-          </select>
         </label>
+        <select
+          id="language-code"
+          value={languageCode}
+          onChange={(e) => setLanguageCode(e.target.value)}
+          aria-label="Select Language Code"
+        >
+          <option value="en-US">English (US)</option>
+          <option value="en-GB">English (UK)</option>
+          <option value="en-AU">English (AU)</option>
+        </select>
       </div>
+
+      {/* Voice Selection */}
       <div>
-        <label>
+        <label htmlFor="voice-select">
           <strong>Voice:</strong>
-          <select
-            value={selectedVoice}
-            onChange={(e) => setSelectedVoice(e.target.value)}
-            required
-          >
-            {voices.map((voice) => (
+        </label>
+        <select
+          id="voice-select"
+          value={selectedVoice}
+          onChange={(e) => setSelectedVoice(e.target.value)}
+          aria-label="Select Voice"
+          required
+        >
+          {voices.length > 0 ? (
+            voices.map((voice) => (
               <option key={voice.name} value={voice.name}>
                 {voice.name} ({voice.languageCodes.join(', ')})
               </option>
-            ))}
-          </select>
-          <button type="button" onClick={handlePreview} disabled={loading}>
-            Preview Voice
-          </button>
-        </label>
+            ))
+          ) : (
+            <option value="" disabled>
+              No voices available
+            </option>
+          )}
+        </select>
+        <button
+          type="button"
+          onClick={handlePreview}
+          disabled={loading || !selectedVoice}
+          aria-label="Preview Selected Voice"
+        >
+          {loading ? 'Previewing...' : 'Preview Voice'}
+        </button>
       </div>
-      {/* Additional form fields for gender, speaking rate, pitch, etc. */}
-      <button type="submit" disabled={loading}>
+
+      {/* Additional Fields (Gender, Speaking Rate, Pitch, etc.) */}
+      <div>
+        <label htmlFor="speaking-rate">
+          <strong>Speaking Rate:</strong>
+        </label>
+        <input
+          id="speaking-rate"
+          type="number"
+          min="0.25"
+          max="4.0"
+          step="0.1"
+          value={speakingRate}
+          onChange={(e) => setSpeakingRate(e.target.value)}
+          aria-label="Set Speaking Rate"
+        />
+      </div>
+      <div>
+        <label htmlFor="pitch">
+          <strong>Pitch:</strong>
+        </label>
+        <input
+          id="pitch"
+          type="number"
+          min="-20.0"
+          max="20.0"
+          step="0.1"
+          value={pitch}
+          onChange={(e) => setPitch(e.target.value)}
+          aria-label="Set Pitch"
+        />
+      </div>
+      <div>
+        <label htmlFor="volume-gain">
+          <strong>Volume Gain (dB):</strong>
+        </label>
+        <input
+          id="volume-gain"
+          type="number"
+          min="-96.0"
+          max="16.0"
+          step="0.1"
+          value={volumeGainDb}
+          onChange={(e) => setVolumeGainDb(e.target.value)}
+          aria-label="Set Volume Gain"
+        />
+      </div>
+
+      {/* Submit Button */}
+      <button type="submit" disabled={loading} aria-label="Submit Form">
         {loading ? 'Generating...' : 'Convert to Speech'}
       </button>
     </form>
