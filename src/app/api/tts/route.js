@@ -1,4 +1,5 @@
-import fs from 'fs/promises';
+import fs from 'fs';
+import fsPromises from 'fs/promises'; // Use this for promise-based methods, like writeFile
 import path from 'path';
 import os from 'os';
 import { google } from 'googleapis';
@@ -42,7 +43,7 @@ export async function POST(req) {
     const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
 
     // Save the audio file locally
-    await fs.writeFile(outputPath, ttsResponse.audioContent, 'binary');
+    await fsPromises.writeFile(outputPath, ttsResponse.audioContent, 'binary');
     console.log('✅ Audio file written to:', outputPath);
 
     // Upload file to Google Drive
@@ -53,12 +54,13 @@ export async function POST(req) {
     const drive = google.drive({ version: 'v3', auth });
 
     const fileMetadata = {
-      name: path.basename(outputPath),
+      name: path.basename(outputPath), // Name of the file in Google Drive
       parents: ['1bmwWFNEhI-ODs3r9Qh_MXEkThggWQss9'], // Google Drive folder ID
     };
+
     const media = {
       mimeType: 'audio/mpeg',
-      body: await fs.readFile(outputPath), // Read the file content
+      body: fs.createReadStream(outputPath), // Use the correct fs module
     };
 
     const response = await drive.files.create({
@@ -81,7 +83,7 @@ export async function POST(req) {
 
     // Clean up the temporary file if it exists
     try {
-      await fs.unlink(outputPath);
+      await fsPromises.unlink(outputPath);
     } catch {
       // Ignore errors during cleanup
     }

@@ -1,78 +1,187 @@
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import { Storage } from '@google-cloud/storage';
-import { NextResponse } from 'next/server';
-import { getTTSClient, validateTTSRequest, generateFileName } from './utils';
+'use client';
+import React, { useState, useEffect } from 'react';
+import Form from './Form';
+import VoicePreview from './VoicePreview';
+import GeneratedAudio from './GeneratedAudio';
+import Loader from './Loader';
 
-export async function POST(req) {
-  const TEMP_DIR = os.tmpdir();
-  const outputPath = path.join(TEMP_DIR, generateFileName());
+const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
+  const [text, setText] = useState('');
+  const [languageCode, setLanguageCode] = useState('en-US');
+  const [voices, setVoices] = useState([]);
+  const [filteredVoices, setFilteredVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState('');
+  const [gender, setGender] = useState('NEUTRAL');
+  const [speakingRate, setSpeakingRate] = useState(1.0);
+  const [pitch, setPitch] = useState(0);
+  const [volumeGainDb, setVolumeGainDb] = useState(0);
+  const [audioFormat, setAudioFormat] = useState('MP3');
+  const [sampleRate, setSampleRate] = useState(24000);
+  const [playWithoutSaving, setPlayWithoutSaving] = useState(false);
+  const [useSSML, setUseSSML] = useState(false);
+  const [audioPath, setAudioPath] = useState('');
+  const [audioBase64, setAudioBase64] = useState('');
+  const [previewAudio, setPreviewAudio] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  try {
-    console.log('📥 POST /api/tts received');
+  // Fetch available voices on mount
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        const response = await fetch(`${apiEndpoint}/voices`, { method: 'GET' });
+        if (!response.ok) throw new Error('Failed to fetch voices');
 
-    const body = await req.json();
-    validateTTSRequest(body);
+        const data = await response.json();
 
-    const {
-      text,
-      voice,
-      languageCode,
-      format = 'MP3',
-      sampleRateHertz = 24000,
-      pitch = 0,
-      speakingRate = 1.0,
-      volumeGain = 0.0,
-    } = body;
+        // Filter out premium voices
+        const filtered = data.voices.filter(
+          (voice) => !voice.name.includes('Chirp') && !voice.name.includes('Wavenet')
+        );
 
-    const ttsClient = getTTSClient();
-    const ttsRequest = {
-      input: { text },
-      voice: { name: voice, languageCode },
-      audioConfig: {
-        audioEncoding: format,
-        sampleRateHertz,
-        pitch,
-        speakingRate,
-        volumeGainDb: volumeGain,
-      },
+        setVoices(filtered || []);
+      } catch (error) {
+        console.error('Error fetching voices:', error);
+        alert('Error fetching voices: ' + error.message);
+      }
     };
 
-    const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
+    fetchVoices();
+  }, [apiEndpoint]);
 
-    // Save the audio file locally
-    await fs.writeFile(outputPath, ttsResponse.audioContent, 'binary');
-    console.log('✅ Audio file written to:', outputPath);
+  // Filter voices whenever the languageCode changes
+  useEffect(() => {
+    const filtered = voices.filter((voice) =>
+      voice.languageCodes.includes(languageCode)
+    );
+    setFilteredVoices(filtered);
+    if (filtered.length > 0) {
+      setSelectedVoice(filtered[0]?.name || ''); // Automatically select the first matching voice
+    } else {
+      setSelectedVoice('');
+    }
+  }, [languageCode, voices]);
 
-    // Upload file to Google Cloud Storage
-    const storage = new Storage({ keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS });
-    const bucketName = '1bmwWFNEhI-ODs3r9Qh_MXEkThggWQss9'; // Replace with your bucket name
-    const fileName = path.basename(outputPath);
+  // Handle voice selection change
+  const handleVoiceChange = (voiceName) => {
+    setSelectedVoice(voiceName); // Update the selected voice in state
+  };
 
-    await storage.bucket(bucketName).upload(outputPath, {
-      destination: `tts-audio/${fileName}`, // Path inside the bucket
-      public: true, // Make the file publicly accessible
-    });
-
-    const publicUrl = `https://storage.googleapis.com/${bucketName}/tts-audio/${fileName}`;
-    console.log('🌐 Public URL:', publicUrl);
-
-    // Return the public URL to the client
-    return NextResponse.json({
-      message: 'Audio generated successfully.',
-      audioUrl: publicUrl,
-    });
-  } catch (error) {
-    console.error('❌ Error in /api/tts:', error);
-
-    // Clean up the temporary file if it exists
-    try {
-      await fs.unlink(outputPath);
-    } catch {
-      // Ignore errors during cleanup
+  const handlePreview = async () => {
+    if (!selectedVoice) {
+      return alert('Please select a voice!');
     }
 
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-}
+    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
+
+    if (!selectedVoiceObj) {
+      return alert('Invalid voice selection.');
+    }
+
+    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${apiEndpoint}/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          voice: selectedVoice,
+          languageCode: correctLanguageCode,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate preview');
+
+      const data = await response.json();
+      setPreviewAudio(data.audioBase64 || '');
+    } catch (error) {
+      console.error('Error generating preview:', error);
+      alert('Error generating preview: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (requestBody) => {
+    if (!selectedVoice) {
+      return alert('Please select a voice!');
+    }
+
+    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
+
+    if (!selectedVoiceObj) {
+      return alert('Invalid voice selection.');
+    }
+
+    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...requestBody, languageCode: correctLanguageCode, voice: selectedVoice }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate speech');
+
+      const data = await response.json();
+
+      if (requestBody.playWithoutSaving) {
+        setAudioBase64(data.audioBase64 || '');
+      } else {
+        setAudioPath(data.link || '');
+      }
+    } catch (error) {
+      console.error('Error generating speech:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Text-to-Speech</h1>
+      <Form
+        text={text}
+        setText={setText}
+        languageCode={languageCode}
+        setLanguageCode={setLanguageCode}
+        voices={filteredVoices} // Use filtered voices here
+        selectedVoice={selectedVoice}
+        setSelectedVoice={handleVoiceChange} // Pass the handler for changing voices
+        gender={gender}
+        setGender={setGender}
+        speakingRate={speakingRate}
+        setSpeakingRate={setSpeakingRate}
+        pitch={pitch}
+        setPitch={setPitch}
+        volumeGainDb={volumeGainDb}
+        setVolumeGainDb={setVolumeGainDb}
+        audioFormat={audioFormat}
+        setAudioFormat={setAudioFormat}
+        sampleRate={sampleRate}
+        setSampleRate={setSampleRate}
+        playWithoutSaving={playWithoutSaving}
+        setPlayWithoutSaving={setPlayWithoutSaving}
+        useSSML={useSSML}
+        setUseSSML={setUseSSML}
+        handleSubmit={handleSubmit}
+        loading={loading}
+        handlePreview={handlePreview}
+      />
+      {loading && <Loader />}
+      <VoicePreview previewAudio={previewAudio} />
+      <GeneratedAudio
+        playWithoutSaving={playWithoutSaving}
+        audioBase64={audioBase64}
+        audioPath={audioPath}
+      />
+    </div>
+  );
+};
+
+export default TextToSpeech;
