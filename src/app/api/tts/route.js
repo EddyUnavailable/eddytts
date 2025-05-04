@@ -25,21 +25,28 @@ export async function POST(req) {
       pitch = 0,
       speakingRate = 1.0,
       volumeGain = 0.0,
-      playWithoutSaving = false, // New flag to play without saving
+      playWithoutSaving = false,
+      ssml = false, // ✅ add this line
     } = body;
 
     const ttsClient = getTTSClient();
+    // Configure the TTS request
     const ttsRequest = {
-      input: { text },
+      input: ssml ? { ssml: text } : { text }, // Use SSML or plain text
       voice: { name: voice, languageCode },
       audioConfig: {
-        audioEncoding: format,
-        sampleRateHertz,
-        pitch,
-        speakingRate,
-        volumeGainDb: volumeGain,
-      },
-    };
+        audioEncoding: 'MP3',
+        speakingRate: 1.0,
+        pitch: 0,
+        volumeGainDb: 0,
+        sampleRateHertz: 24000,
+  },
+};
+
+console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
+
+// Call the Google TTS API
+
 
     const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
 

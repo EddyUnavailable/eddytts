@@ -4,11 +4,15 @@ import { NextResponse } from 'next/server';
 export async function POST(req) {
   try {
     // Parse the request body
-    const { voice, languageCode } = await req.json();
+    const { voice, languageCode, text = 'This is a voice preview.', audioConfig = {} } = await req.json();
 
     // Validate input
     if (!voice || !languageCode) {
       return NextResponse.json({ error: 'Voice and languageCode are required.' }, { status: 400 });
+    }
+
+    if (typeof voice !== 'string' || typeof languageCode !== 'string') {
+      return NextResponse.json({ error: 'Invalid input types.' }, { status: 400 });
     }
 
     console.log('📥 Received voice:', voice, 'languageCode:', languageCode);
@@ -20,14 +24,15 @@ export async function POST(req) {
 
     // Configure the TTS request
     const ttsRequest = {
-      input: { text: 'This is a voice preview.' }, // Sample text for preview
-      voice: { name: voice, languageCode },       // Use the provided voice and language code
+      input: { text },
+      voice: { name: voice, languageCode },
       audioConfig: {
-        audioEncoding: 'MP3',       // MP3 format
-        speakingRate: 1.0,          // Default speaking rate
-        pitch: 0,                   // Default pitch
-        volumeGainDb: 0,            // Default volume gain
-        sampleRateHertz: 24000,     // Default sample rate
+        audioEncoding: 'MP3',
+        speakingRate: 1.0,
+        pitch: 0,
+        volumeGainDb: 0,
+        sampleRateHertz: 24000,
+        ...audioConfig,
       },
     };
 
