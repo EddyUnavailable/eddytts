@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Form from './Form';
 import GeneratedAudio from './GeneratedAudio';
 import Loader from './Loader';
+import '/home/eddy/workshop/eddytts/src/app/css/textToSpeech.css';
 
 const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   const [text, setText] = useState('');
@@ -137,8 +138,8 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   };
 
   return (
-    <div>
-      <h1>Text-to-Speech</h1>
+    <div className="container">
+      <h1 className="title">Text-to-Speech</h1>
       <Form
         text={text}
         setText={setText}
@@ -166,8 +167,8 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         handleSubmit={handleSubmit}
         loading={loading}
       />
-      {loading && <Loader />}
-      <GeneratedAudio audioSamples={audioSamples} onDelete={handleDelete} />
+      {loading && <Loader className="loader" />}
+      <GeneratedAudio className="audioSamples" audioSamples={audioSamples} onDelete={handleDelete} />
     </div>
   );
 };

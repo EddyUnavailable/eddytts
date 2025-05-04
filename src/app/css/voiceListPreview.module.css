@@ -1,0 +1,27 @@
+/* voiceListPreview.module.css */
+
+.voiceListContainer {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .voiceListItem {
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  
+  .voiceListItemFavorite {
+    background-color: #fffae6;
+  }
+  
+  .voiceName {
+    text-decoration: none; /* Default */
+  }
+  
+  .voiceNameLoading {
+    text-decoration: underline;
+  }
+  
+  .favoriteButton {
+    margin-left: 10px;
+  }

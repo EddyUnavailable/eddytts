@@ -1,10 +1,23 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import styles from '/home/eddy/workshop/eddytts/src/app/css/voiceListPreview.module.css';
 
 const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
   const [loading, setLoading] = useState(false);
   const [currentVoice, setCurrentVoice] = useState(null);
-  const [activeAudio, setActiveAudio] = useState(null); // Store the currently playing audio
+  const [activeAudio, setActiveAudio] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+
+  // Load favorites from local storage on mount
+  useEffect(() => {
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    setFavorites(savedFavorites);
+  }, []);
+
+  // Save favorites to local storage whenever they change
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
 
   // Cleanup active audio on component unmount
   useEffect(() => {
@@ -17,7 +30,7 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
     };
   }, [activeAudio]);
 
-  // Function to preview a voice (without SSML)
+  // Function to preview a voice
   const handlePreview = async (voiceName) => {
     if (loading) return;
 
@@ -30,7 +43,7 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
       return alert('Invalid voice selection.');
     }
 
-    const languageCode = selectedVoiceObj.languageCodes[0]; // Use the first language code
+    const languageCode = selectedVoiceObj.languageCodes[0];
 
     setLoading(true);
     setCurrentVoice(voiceName);
@@ -55,17 +68,13 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
         throw new Error('Preview failed: No audio data received.');
       }
 
-      // Stop and reset the currently playing audio, if any
       if (activeAudio) {
         activeAudio.pause();
         activeAudio.currentTime = 0;
       }
 
-      // Create a new audio element and play it
       const audio = new Audio(`data:audio/mpeg;base64,${data.audioBase64}`);
       audio.play();
-
-      // Set the new audio as the active audio
       setActiveAudio(audio);
     } catch (error) {
       console.error('Error generating preview:', error);
@@ -76,19 +85,44 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
     }
   };
 
+  // Function to toggle favorite voices
+  const toggleFavorite = (voiceName) => {
+    setFavorites((prevFavorites) =>
+      prevFavorites.includes(voiceName)
+        ? prevFavorites.filter((name) => name !== voiceName)
+        : [...prevFavorites, voiceName]
+    );
+  };
+
   return (
     <div>
       <h2>Voice Preview List</h2>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
+      <ul className={styles.voiceListContainer}>
         {voices.map((voice) => (
-          <li key={voice.name} style={{ marginBottom: '10px' }}>
-            <span>{voice.name}</span>
-            <button
-              style={{ marginLeft: '10px' }}
-              onClick={() => handlePreview(voice.name)}
-              disabled={loading && currentVoice === voice.name}
+          <li
+            key={voice.name}
+            className={`${styles.voiceListItem} ${
+              favorites.includes(voice.name) ? styles.voiceListItemFavorite : ''
+            }`}
+            onClick={() => handlePreview(voice.name)} // Trigger preview on name click
+          >
+            <span
+              className={
+                loading && currentVoice === voice.name
+                  ? styles.voiceNameLoading
+                  : styles.voiceName
+              }
             >
-              {loading && currentVoice === voice.name ? 'Loading...' : 'Preview'}
+              {voice.name}
+            </span>
+            <button
+              className={styles.favoriteButton}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent triggering the preview
+                toggleFavorite(voice.name);
+              }}
+            >
+              {favorites.includes(voice.name) ? '★ Remove Favorite' : '☆ Add to Favorites'}
             </button>
           </li>
         ))}
