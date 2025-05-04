@@ -7,6 +7,7 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
   const [currentVoice, setCurrentVoice] = useState(null);
   const [activeAudio, setActiveAudio] = useState(null);
   const [favorites, setFavorites] = useState([]);
+  const [sortedVoices, setSortedVoices] = useState([]);
 
   // Load favorites from local storage on mount
   useEffect(() => {
@@ -29,6 +30,26 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
       }
     };
   }, [activeAudio]);
+
+  // Function to rearrange voice name
+  const formatVoiceName = (originalName) => {
+    const parts = originalName.split('-'); // Split the name by dashes
+    const type = parts.slice(2, parts.length - 1).join('-'); // Extract the type (e.g., Chirp3-HD)
+    const region = parts[1]; // Extract the region (e.g., US, UK, AU)
+    const name = parts[parts.length - 1]; // Extract the actual name (e.g., Achernar)
+
+    return `${name}-${type}-${region}`; // Rearrange the components
+  };
+
+  // Sort voices by name on component mount or when voices change
+  useEffect(() => {
+    const sorted = [...voices].sort((a, b) => {
+      const nameA = formatVoiceName(a.name).toLowerCase();
+      const nameB = formatVoiceName(b.name).toLowerCase();
+      return nameA.localeCompare(nameB); // Compare alphabetically
+    });
+    setSortedVoices(sorted);
+  }, [voices]);
 
   // Function to preview a voice
   const handlePreview = async (voiceName) => {
@@ -98,7 +119,7 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
     <div>
       <h2>Voice Preview List</h2>
       <ul className={styles.voiceListContainer}>
-        {voices.map((voice) => (
+        {sortedVoices.map((voice) => (
           <li
             key={voice.name}
             className={`${styles.voiceListItem} ${
@@ -106,15 +127,26 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
             }`}
             onClick={() => handlePreview(voice.name)} // Trigger preview on name click
           >
+            {/* Display formatted voice name with gender-specific color */}
             <span
               className={
                 loading && currentVoice === voice.name
                   ? styles.voiceNameLoading
                   : styles.voiceName
               }
+              style={{
+                color:
+                  voice.ssmlGender === 'MALE'
+                    ? 'blue'
+                    : voice.ssmlGender === 'FEMALE'
+                    ? 'pink'
+                    : 'black',
+              }}
             >
-              {voice.name}
+              {formatVoiceName(voice.name)}
             </span>
+
+            {/* Favorite button */}
             <button
               className={styles.favoriteButton}
               onClick={(e) => {

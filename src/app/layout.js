@@ -15,6 +15,8 @@ export default function RootLayout({ children }) {
             <Link href="/">Home</Link>
             <Link href="/ttsList">TTS List</Link>
             <Link href="/imageTools">Image Tools</Link>
+            <Link href="/possibleFeatures">Possible Features</Link>
+            
           </nav>
         </header>
         <main style={{ padding: '2rem' }}>{children}</main>

@@ -1,5 +1,3 @@
-/* voiceListPreview.module.css */
-
 .voiceListContainer {
     list-style: none;
     padding: 0;
@@ -8,6 +6,9 @@
   .voiceListItem {
     margin-bottom: 10px;
     cursor: pointer;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
   }
   
   .voiceListItemFavorite {
@@ -15,13 +16,28 @@
   }
   
   .voiceName {
-    text-decoration: none; /* Default */
+    font-size: 1.2rem;
+    font-weight: bold;
   }
   
   .voiceNameLoading {
     text-decoration: underline;
   }
   
+  .supportedFeatures {
+    font-size: 0.9rem;
+    color: gray;
+    margin-top: 5px;
+  }
+  
   .favoriteButton {
     margin-left: 10px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  .favoriteButton:hover {
+    background-color: #e6e6e6;
   }
