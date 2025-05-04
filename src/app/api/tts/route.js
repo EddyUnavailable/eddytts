@@ -78,7 +78,8 @@ export async function POST(req) {
       media,
       fields: 'id, webViewLink, webContentLink',
     });
-
+    console.log('API Response:', response);
+    console.log('Parsed Data:', data);
     console.log('🌐 File uploaded to Google Drive:', response.data);
 
     // Return the public URL to the client

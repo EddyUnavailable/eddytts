@@ -14,6 +14,7 @@ export default function RootLayout({ children }) {
           <nav style={{ display: 'flex', gap: '1rem' }}>
             <Link href="/">Home</Link>
             <Link href="/ttsList">TTS List</Link>
+            <Link href="/imageTools">Image Tools</Link>
           </nav>
         </header>
         <main style={{ padding: '2rem' }}>{children}</main>

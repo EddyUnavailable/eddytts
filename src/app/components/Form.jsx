@@ -5,7 +5,7 @@ const Form = ({
   setText,
   languageCode,
   setLanguageCode,
-  voices,
+  voices = [], // Default to an empty array if voices are undefined
   selectedVoice,
   setSelectedVoice,
   gender,
@@ -75,7 +75,9 @@ const Form = ({
           onChange={(e) => setPlayWithoutSaving(e.target.checked)}
           aria-describedby="play-without-saving-desc"
         />
-        <small id="play-without-saving-desc">Option to listen to the generated audio without saving it.</small>
+        <small id="play-without-saving-desc">
+          Option to listen to the generated audio without saving it.
+        </small>
       </div>
 
       {/* Use SSML */}
@@ -88,6 +90,7 @@ const Form = ({
           type="checkbox"
           checked={useSSML}
           onChange={(e) => setUseSSML(e.target.checked)}
+          aria-label="Toggle SSML usage"
         />
       </div>
 
@@ -142,7 +145,7 @@ const Form = ({
         </button>
       </div>
 
-      {/* Additional Fields (Gender, Speaking Rate, Pitch, etc.) */}
+      {/* Additional Fields (Speaking Rate, Pitch, Volume Gain) */}
       <div>
         <label htmlFor="speaking-rate">
           <strong>Speaking Rate:</strong>

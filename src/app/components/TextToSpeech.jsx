@@ -1,7 +1,5 @@
-'use client';
 import React, { useState, useEffect } from 'react';
 import Form from './Form';
-import AudioPreview from './AudioPreview';
 import GeneratedAudio from './GeneratedAudio';
 import Loader from './Loader';
 
@@ -17,9 +15,9 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   const [volumeGainDb, setVolumeGainDb] = useState(0);
   const [audioFormat, setAudioFormat] = useState('MP3');
   const [sampleRate, setSampleRate] = useState(24000);
+  const [audioSamples, setAudioSamples] = useState([]);
   const [playWithoutSaving, setPlayWithoutSaving] = useState(false);
   const [useSSML, setUseSSML] = useState(false);
-  const [audioSamples, setAudioSamples] = useState([]); // Array of audio samples
   const [loading, setLoading] = useState(false);
 
   // Fetch available voices on mount
@@ -30,8 +28,8 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         if (!response.ok) throw new Error('Failed to fetch voices');
 
         const data = await response.json();
+        console.log('Fetched voices:', data);
 
-        // Filter out premium voices
         const filtered = data.voices.filter(
           (voice) => !voice.name.includes('Chirp') && !voice.name.includes('Wavenet')
         );
@@ -53,20 +51,18 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
     );
     setFilteredVoices(filtered);
     if (filtered.length > 0) {
-      setSelectedVoice(filtered[0]?.name || ''); // Automatically select the first matching voice
+      setSelectedVoice(filtered[0]?.name || '');
     } else {
       setSelectedVoice('');
     }
   }, [languageCode, voices]);
 
-  // Handle voice selection change
   const handleVoiceChange = (voiceName) => {
     setSelectedVoice(voiceName); // Update the selected voice in state
   };
 
-  // Handle TTS submission
   const handleSubmit = async (requestBody) => {
-    console.log('Submitting TTS request with:', { selectedVoice, languageCode, text }); // Debugging
+    console.log('Submitting TTS request with:', { selectedVoice, languageCode, text });
 
     if (!selectedVoice) {
       return alert('Please select a voice!');
@@ -75,7 +71,7 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
     const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
 
     if (!selectedVoiceObj) {
-      console.error('Voice not found in list:', selectedVoice); // Debugging
+      console.error('Voice not found in list:', selectedVoice);
       return alert('Invalid voice selection.');
     }
 
@@ -96,13 +92,12 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
       });
 
       if (!response.ok) {
-        console.error('TTS API returned an error:', response.statusText); // Debugging
+        console.error('TTS API returned an error:', response.statusText);
         throw new Error('Failed to generate speech');
       }
 
       const data = await response.json();
-
-      console.log('TTS API response:', data); // Debugging
+      console.log('TTS API response:', data);
 
       if (requestBody.playWithoutSaving) {
         if (!data.audioBase64) {
@@ -115,7 +110,6 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
           path: null,
         };
 
-        // Add the new sample to the list of audio samples
         setAudioSamples((prevSamples) => [...prevSamples, newSample]);
       } else {
         if (!data.link) {
@@ -128,7 +122,6 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
           path: data.link,
         };
 
-        // Add the new sample to the list of audio samples
         setAudioSamples((prevSamples) => [...prevSamples, newSample]);
       }
     } catch (error) {
@@ -139,6 +132,10 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
     }
   };
 
+  const handleDelete = (id) => {
+    setAudioSamples((prevSamples) => prevSamples.filter((sample) => sample.id !== id));
+  };
+
   return (
     <div>
       <h1>Text-to-Speech</h1>
@@ -147,9 +144,9 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         setText={setText}
         languageCode={languageCode}
         setLanguageCode={setLanguageCode}
-        voices={filteredVoices} // Use filtered voices here
+        voices={filteredVoices}
         selectedVoice={selectedVoice}
-        setSelectedVoice={handleVoiceChange} // Pass the handler for changing voices
+        setSelectedVoice={handleVoiceChange}
         gender={gender}
         setGender={setGender}
         speakingRate={speakingRate}
@@ -166,16 +163,11 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         setPlayWithoutSaving={setPlayWithoutSaving}
         useSSML={useSSML}
         setUseSSML={setUseSSML}
-        handleSubmit={handleSubmit} // Correctly pass handleSubmit
+        handleSubmit={handleSubmit}
         loading={loading}
       />
       {loading && <Loader />}
-      <AudioPreview
-        selectedVoice={selectedVoice}
-        voices={voices}
-        apiEndpoint={apiEndpoint}
-      />
-      <GeneratedAudio audioSamples={audioSamples} onDelete={() => {}} />
+      <GeneratedAudio audioSamples={audioSamples} onDelete={handleDelete} />
     </div>
   );
 };

@@ -1,15 +1,27 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-const VoiceListPreview = ({ voices, apiEndpoint }) => {
+const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
   const [loading, setLoading] = useState(false);
   const [currentVoice, setCurrentVoice] = useState(null);
-  const [activeAudio, setActiveAudio] = useState(null); // Store active audio element
+  const [activeAudio, setActiveAudio] = useState(null); // Store the currently playing audio
 
+  // Cleanup active audio on component unmount
+  useEffect(() => {
+    return () => {
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+        setActiveAudio(null);
+      }
+    };
+  }, [activeAudio]);
+
+  // Function to preview a voice (without SSML)
   const handlePreview = async (voiceName) => {
     if (loading) return;
 
-    console.log('Previewing voice:', voiceName); // Debugging
+    console.log('Previewing voice:', voiceName);
 
     const selectedVoiceObj = voices.find((voice) => voice.name === voiceName);
 
@@ -43,10 +55,10 @@ const VoiceListPreview = ({ voices, apiEndpoint }) => {
         throw new Error('Preview failed: No audio data received.');
       }
 
-      // Stop the currently playing audio if there is one
+      // Stop and reset the currently playing audio, if any
       if (activeAudio) {
         activeAudio.pause();
-        activeAudio.currentTime = 0; // Reset playback
+        activeAudio.currentTime = 0;
       }
 
       // Create a new audio element and play it
@@ -58,6 +70,67 @@ const VoiceListPreview = ({ voices, apiEndpoint }) => {
     } catch (error) {
       console.error('Error generating preview:', error);
       alert('Error generating preview: ' + error.message);
+    } finally {
+      setLoading(false);
+      setCurrentVoice(null);
+    }
+  };
+
+  // Function to test SSML support
+  const handlePreviewWithSSML = async (voiceName) => {
+    if (loading) return;
+  
+    console.log('Testing SSML support for voice:', voiceName);
+  
+    const selectedVoiceObj = voices.find((voice) => voice.name === voiceName);
+  
+    if (!selectedVoiceObj) {
+      console.error('Voice not found:', voiceName);
+      return alert('Invalid voice selection.');
+    }
+  
+    const languageCode = selectedVoiceObj.languageCodes[0]; // Use the first language code
+  
+    const ssmlText = `
+      <speak>
+        <prosody pitch="high" rate="slow">Hello, this is a test with SSML.</prosody>
+      </speak>
+    `;
+  
+    setLoading(true);
+    setCurrentVoice(voiceName);
+  
+    try {
+      const response = await fetch(`${apiEndpoint}/preview`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          voice: voiceName,
+          languageCode,
+          text: ssmlText,
+          ssml: true, // Inform the API that SSML is being used
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to generate preview with SSML');
+      }
+  
+      const data = await response.json();
+  
+      if (!data.audioBase64) {
+        throw new Error('No audio data received for SSML test.');
+      }
+  
+      // Log the response for debugging
+      console.log('SSML Response:', data);
+  
+      // Play the generated SSML audio
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audioBase64}`);
+      audio.play();
+    } catch (error) {
+      console.error('Error testing SSML:', error);
+      alert('Error testing SSML: ' + error.message);
     } finally {
       setLoading(false);
       setCurrentVoice(null);
@@ -77,6 +150,13 @@ const VoiceListPreview = ({ voices, apiEndpoint }) => {
               disabled={loading && currentVoice === voice.name}
             >
               {loading && currentVoice === voice.name ? 'Loading...' : 'Preview'}
+            </button>
+            <button
+              style={{ marginLeft: '10px' }}
+              onClick={() => handlePreviewWithSSML(voice.name)}
+              disabled={loading && currentVoice === voice.name}
+            >
+              {loading && currentVoice === voice.name ? 'Testing SSML...' : 'Test SSML'}
             </button>
           </li>
         ))}
