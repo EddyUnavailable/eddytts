@@ -15,7 +15,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Invalid input types.' }, { status: 400 });
     }
 
-    console.log('📥 Received voice:', voice, 'languageCode:', languageCode);
+    // console.log('📥 Received voice:', voice, 'languageCode:', languageCode);
 
     // Initialize Google Text-to-Speech client
     const ttsClient = new textToSpeech.TextToSpeechClient({
@@ -36,12 +36,12 @@ export async function POST(req) {
       },
     };
 
-    console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
+    // console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
 
     // Call the Google TTS API
     const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
 
-    console.log('✅ TTS Response received.');
+    // console.log('✅ TTS Response received.');
 
     // Return audio content as Base64
     return NextResponse.json({

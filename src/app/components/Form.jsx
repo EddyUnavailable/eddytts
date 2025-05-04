@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 const Form = ({
   text,
@@ -8,25 +8,14 @@ const Form = ({
   voices = [], // Default to an empty array if voices are undefined
   selectedVoice,
   setSelectedVoice,
-  gender,
-  setGender,
   speakingRate,
   setSpeakingRate,
   pitch,
   setPitch,
   volumeGainDb,
   setVolumeGainDb,
-  audioFormat,
-  setAudioFormat,
-  sampleRate,
-  setSampleRate,
-  playWithoutSaving,
-  setPlayWithoutSaving,
-  useSSML,
-  setUseSSML,
   handleSubmit,
   loading,
-  handlePreview,
 }) => {
   const submitForm = (e) => {
     e.preventDefault();
@@ -34,15 +23,20 @@ const Form = ({
       text,
       languageCode,
       name: selectedVoice,
-      gender,
       speakingRate: parseFloat(speakingRate) || 1.0, // Fallback to default
       pitch: parseFloat(pitch) || 0, // Fallback to default
       volumeGainDb: parseFloat(volumeGainDb) || 0, // Fallback to default
-      format: audioFormat,
-      sampleRateHertz: parseInt(sampleRate, 10) || 24000, // Fallback to default
-      playWithoutSaving,
-      ssml: useSSML,
     });
+  };
+
+  // Function to format the voice name
+  const formatVoiceName = (originalName) => {
+    const parts = originalName.split("-"); // Split the name by dashes
+    const type = parts.slice(2, parts.length - 1).join("-"); // Extract the type (e.g., Chirp3-HD)
+    const region = parts[1]; // Extract the region (e.g., US, UK, AU)
+    const name = parts[parts.length - 1]; // Extract the actual name (e.g., Achernar)
+
+    return `${name}-${type}-${region}`; // Rearrange to desired format
   };
 
   return (
@@ -61,37 +55,6 @@ const Form = ({
           aria-describedby="text-input-desc"
         />
         <small id="text-input-desc">Enter the text to convert to speech.</small>
-      </div>
-
-      {/* Play Without Saving */}
-      <div>
-        <label htmlFor="play-without-saving">
-          <strong>Play Without Saving:</strong>
-        </label>
-        <input
-          id="play-without-saving"
-          type="checkbox"
-          checked={playWithoutSaving}
-          onChange={(e) => setPlayWithoutSaving(e.target.checked)}
-          aria-describedby="play-without-saving-desc"
-        />
-        <small id="play-without-saving-desc">
-          Option to listen to the generated audio without saving it.
-        </small>
-      </div>
-
-      {/* Use SSML */}
-      <div>
-        <label htmlFor="use-ssml">
-          <strong>Use SSML:</strong>
-        </label>
-        <input
-          id="use-ssml"
-          type="checkbox"
-          checked={useSSML}
-          onChange={(e) => setUseSSML(e.target.checked)}
-          aria-label="Toggle SSML usage"
-        />
       </div>
 
       {/* Language Code Selection */}
@@ -125,8 +88,12 @@ const Form = ({
         >
           {voices.length > 0 ? (
             voices.map((voice) => (
-              <option key={voice.name} value={voice.name}>
-                {voice.name} ({voice.languageCodes.join(', ')})
+              <option
+                key={voice.name}
+                value={voice.name}
+                style={{ color: voice.color }} // Apply gender-specific color
+              >
+                {voice.formattedName} ({voice.languageCodes.join(", ")})
               </option>
             ))
           ) : (
@@ -135,14 +102,6 @@ const Form = ({
             </option>
           )}
         </select>
-        <button
-          type="button"
-          onClick={handlePreview}
-          disabled={loading || !selectedVoice}
-          aria-label="Preview Selected Voice"
-        >
-          {loading ? 'Previewing...' : 'Preview Voice'}
-        </button>
       </div>
 
       {/* Additional Fields (Speaking Rate, Pitch, Volume Gain) */}
@@ -194,7 +153,7 @@ const Form = ({
 
       {/* Submit Button */}
       <button type="submit" disabled={loading} aria-label="Submit Form">
-        {loading ? 'Generating...' : 'Convert to Speech'}
+        {loading ? "Generating..." : "Convert to Speech"}
       </button>
     </form>
   );

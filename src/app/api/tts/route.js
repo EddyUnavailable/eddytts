@@ -11,7 +11,7 @@ export async function POST(req) {
   const outputPath = path.join(TEMP_DIR, generateFileName());
 
   try {
-    console.log('📥 POST /api/tts received');
+    // console.log('📥 POST /api/tts received');
 
     const body = await req.json();
     validateTTSRequest(body);
@@ -52,7 +52,7 @@ console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
 
     // Save the audio file locally
     await fsPromises.writeFile(outputPath, ttsResponse.audioContent, 'binary');
-    console.log('✅ Audio file written to:', outputPath);
+    // console.log('✅ Audio file written to:', outputPath);
 
     if (playWithoutSaving) {
       // Return the audio as Base64 without saving to Google Drive
@@ -85,9 +85,9 @@ console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
       media,
       fields: 'id, webViewLink, webContentLink',
     });
-    console.log('API Response:', response);
-    console.log('Parsed Data:', data);
-    console.log('🌐 File uploaded to Google Drive:', response.data);
+    // console.log('API Response:', response);
+    // console.log('Parsed Data:', data);
+    // console.log('🌐 File uploaded to Google Drive:', response.data);
 
     // Return the public URL to the client
     return NextResponse.json({
@@ -97,7 +97,7 @@ console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
       webContentLink: response.data.webContentLink,
     });
   } catch (error) {
-    console.error('❌ Error in /api/tts:', error);
+    // console.error('❌ Error in /api/tts:', error);
 
     // Clean up the temporary file if it exists
     try {

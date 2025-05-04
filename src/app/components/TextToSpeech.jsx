@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Form from './Form';
 import GeneratedAudio from './GeneratedAudio';
 import Loader from './Loader';
-import '/home/eddy/workshop/eddytts/src/app/css/textToSpeech.css';
+import '../css/textToSpeech.css';
 
 const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   const [text, setText] = useState('');
@@ -17,9 +17,19 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   const [audioFormat, setAudioFormat] = useState('MP3');
   const [sampleRate, setSampleRate] = useState(24000);
   const [audioSamples, setAudioSamples] = useState([]);
-  const [playWithoutSaving, setPlayWithoutSaving] = useState(false);
+  const [playWithoutSaving, setPlayWithoutSaving] = useState(false); // Added state for "record without saving"
   const [useSSML, setUseSSML] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Function to format the voice name
+  const formatVoiceName = (originalName) => {
+    const parts = originalName.split('-');
+    const type = parts.slice(2, parts.length - 1).join('-');
+    const region = parts[1];
+    const name = parts[parts.length - 1];
+
+    return `${name}-${type}-${region}`;
+  };
 
   // Fetch available voices on mount
   useEffect(() => {
@@ -31,11 +41,18 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         const data = await response.json();
         console.log('Fetched voices:', data);
 
-        const filtered = data.voices.filter(
-          (voice) => !voice.name.includes('Chirp') && !voice.name.includes('Wavenet')
-        );
+        const formattedVoices = data.voices.map((voice) => ({
+          ...voice,
+          formattedName: formatVoiceName(voice.name),
+          color:
+            voice.ssmlGender === 'MALE'
+              ? 'blue'
+              : voice.ssmlGender === 'FEMALE'
+              ? 'pink'
+              : 'black',
+        }));
 
-        setVoices(filtered || []);
+        setVoices(formattedVoices || []);
       } catch (error) {
         console.error('Error fetching voices:', error);
         alert('Error fetching voices: ' + error.message);
@@ -59,11 +76,16 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
   }, [languageCode, voices]);
 
   const handleVoiceChange = (voiceName) => {
-    setSelectedVoice(voiceName); // Update the selected voice in state
+    setSelectedVoice(voiceName);
   };
 
   const handleSubmit = async (requestBody) => {
-    console.log('Submitting TTS request with:', { selectedVoice, languageCode, text });
+    console.log('Submitting TTS request with:', {
+      selectedVoice,
+      languageCode,
+      text,
+      playWithoutSaving,
+    });
 
     if (!selectedVoice) {
       return alert('Please select a voice!');
@@ -86,9 +108,10 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...requestBody,
-          text, // Include the text for TTS
+          text,
           languageCode: correctLanguageCode,
           voice: selectedVoice,
+          playWithoutSaving, // Include the "record without saving" option
         }),
       });
 
@@ -100,7 +123,7 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
       const data = await response.json();
       console.log('TTS API response:', data);
 
-      if (requestBody.playWithoutSaving) {
+      if (playWithoutSaving) {
         if (!data.audioBase64) {
           throw new Error('Missing audioBase64 in API response');
         }
@@ -161,14 +184,29 @@ const TextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
         sampleRate={sampleRate}
         setSampleRate={setSampleRate}
         playWithoutSaving={playWithoutSaving}
-        setPlayWithoutSaving={setPlayWithoutSaving}
+        setPlayWithoutSaving={setPlayWithoutSaving} // Pass the setter for "record without saving"
         useSSML={useSSML}
         setUseSSML={setUseSSML}
         handleSubmit={handleSubmit}
         loading={loading}
       />
+      <div>
+        <label htmlFor="play-without-saving">
+          <strong>Record without saving:</strong>
+        </label>
+        <input
+          type="checkbox"
+          id="play-without-saving"
+          checked={playWithoutSaving}
+          onChange={(e) => setPlayWithoutSaving(e.target.checked)}
+        />
+      </div>
       {loading && <Loader className="loader" />}
-      <GeneratedAudio className="audioSamples" audioSamples={audioSamples} onDelete={handleDelete} />
+      <GeneratedAudio
+        className="audioSamples"
+        audioSamples={audioSamples}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };

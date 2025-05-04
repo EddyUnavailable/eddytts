@@ -5,6 +5,9 @@ import styles from "./page.module.css";
 import Link from 'next/link';
 import TextToSpeech from './components/TextToSpeech';
 import VoiceListPreview from './components/VoiceListPreview';
+import SSMLTextToSpeech from './components/SSMLTextToSpeech';
+import VoiceProvider from "./components/VoiceProvider";
+
 
 export default function HomePage() {
   const [voices, setVoices] = useState([]); // Initialize voices state
@@ -31,11 +34,14 @@ export default function HomePage() {
     <div>
       <div>
         <p>Just some info here</p>
-        <TextToSpeech />
-        <div>
+          <VoiceProvider>
+            <TextToSpeech />
+          </VoiceProvider>
+          <VoiceProvider>
+            <SSMLTextToSpeech />
+          </VoiceProvider>
           <h1>Voice Preview Tool</h1>
           <VoiceListPreview voices={voices} apiEndpoint={apiEndpoint} />
-        </div>
       </div>
     </div>
   );
