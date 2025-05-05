@@ -18,25 +18,37 @@ const VoiceProvider = ({ apiEndpoint = "/api/tts/voices", children }) => {
     const fetchVoices = async () => {
       try {
         const response = await fetch(apiEndpoint, { method: "GET" });
-        if (!response.ok) throw new Error("Failed to fetch voices");
+        if (!response.ok) throw new Error(`Failed to fetch voices. Status: ${response.status}`);
 
         const data = await response.json();
 
-        const formattedVoices = data.voices.map((voice) => ({
-          ...voice,
-          formattedName: formatVoiceName(voice.name),
-          color:
-            voice.ssmlGender === "MALE"
-              ? "blue"
-              : voice.ssmlGender === "FEMALE"
-              ? "pink"
-              : "black", // Apply gender-specific color
-        }));
+        // Validate and format voices data
+        if (!data.voices || !Array.isArray(data.voices)) {
+          throw new Error("Invalid response format: 'voices' is missing or not an array.");
+        }
+
+        const formattedVoices = data.voices.map((voice) => {
+          if (!voice.name || !voice.languageCodes || !voice.ssmlGender) {
+            console.warn("Skipping invalid voice data:", voice);
+            return null; // Skip invalid voice objects
+          }
+
+          return {
+            ...voice,
+            formattedName: formatVoiceName(voice.name),
+            color:
+              voice.ssmlGender === "MALE"
+                ? "blue"
+                : voice.ssmlGender === "FEMALE"
+                ? "pink"
+                : "black", // Apply gender-specific color
+          };
+        }).filter(Boolean); // Remove null entries
 
         setVoices(formattedVoices);
       } catch (err) {
         console.error("Error fetching voices:", err);
-        setError(err.message);
+        setError(err.message || "An unknown error occurred.");
       } finally {
         setLoading(false);
       }

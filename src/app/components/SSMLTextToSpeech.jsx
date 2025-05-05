@@ -1,195 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import Form from './Form';
+import Form from './Form'; // Reuse your existing Form component or create a separate SSML form
 import GeneratedAudio from './GeneratedAudio';
 import Loader from './Loader';
 import '../css/textToSpeech.css';
 
-const SSMLTextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
-  const [ssmlText, setSsmlText] = useState(''); // Input for SSML text
+const SSMLTextToSpeech = ({ voices = [], apiEndpoint = '/api/ssml' }) => {
+  const [ssml, setSSML] = useState('');
   const [languageCode, setLanguageCode] = useState('en-US');
-  const [voices, setVoices] = useState([]);
   const [filteredVoices, setFilteredVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState('');
   const [speakingRate, setSpeakingRate] = useState(1.0);
   const [pitch, setPitch] = useState(0);
   const [volumeGainDb, setVolumeGainDb] = useState(0);
   const [audioSamples, setAudioSamples] = useState([]);
-  const [playWithoutSaving, setPlayWithoutSaving] = useState(false); // New state for "Record Without Saving"
   const [loading, setLoading] = useState(false);
 
-  // Function to format the voice name
-  const formatVoiceName = (originalName) => {
-    const parts = originalName.split('-'); // Split the name by dashes
-    const type = parts.slice(2, parts.length - 1).join('-'); // Extract the type (e.g., Chirp3-HD)
-    const region = parts[1]; // Extract the region (e.g., US, UK, AU)
-    const name = parts[parts.length - 1]; // Extract the actual name (e.g., Achernar)
-
-    return `${name}-${type}-${region}`; // Rearrange to desired format
-  };
-
-  // Fetch available voices on mount
   useEffect(() => {
-    const fetchVoices = async () => {
-      try {
-        const response = await fetch(`${apiEndpoint}/voices`, { method: 'GET' });
-        if (!response.ok) throw new Error('Failed to fetch voices');
-
-        const data = await response.json();
-        console.log('Fetched voices:', data);
-
-        const formattedVoices = data.voices.map((voice) => ({
-          ...voice,
-          formattedName: formatVoiceName(voice.name),
-          color:
-            voice.ssmlGender === 'MALE'
-              ? 'blue'
-              : voice.ssmlGender === 'FEMALE'
-              ? 'pink'
-              : 'black', // Apply gender-specific color
-        }));
-
-        setVoices(formattedVoices || []);
-      } catch (error) {
-        console.error('Error fetching voices:', error);
-        alert('Error fetching voices: ' + error.message);
-      }
-    };
-
-    fetchVoices();
-  }, [apiEndpoint]);
-
-  // Filter voices whenever the languageCode changes
-  useEffect(() => {
-    const filtered = voices.filter((voice) =>
-      voice.languageCodes.includes(languageCode)
-    );
+    const filtered = voices.filter((voice) => voice.languageCodes.includes(languageCode));
     setFilteredVoices(filtered);
-    if (filtered.length > 0) {
-      setSelectedVoice(filtered[0]?.name || '');
-    } else {
-      setSelectedVoice('');
-    }
+    setSelectedVoice(filtered[0]?.name || '');
   }, [languageCode, voices]);
 
-  const handleSubmit = async () => {
-    console.log('Submitting SSML TTS request with:', {
-      selectedVoice,
-      languageCode,
-      ssmlText,
-      playWithoutSaving,
-    });
-  
-    if (!selectedVoice) {
-      return alert('Please select a voice!');
-    }
-  
-    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
-  
-    if (!selectedVoiceObj) {
-      console.error('Voice not found in list:', selectedVoice);
-      return alert('Invalid voice selection.');
-    }
-  
+  const handleSubmit = async (requestBody) => {
+    if (!selectedVoice) return alert('Please select a voice!');
+    const selectedVoiceObj = voices.find((v) => v.name === selectedVoice);
+    if (!selectedVoiceObj) return alert('Invalid voice selection.');
     const correctLanguageCode = selectedVoiceObj.languageCodes[0];
-  
+
     setLoading(true);
-  
     try {
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ssml: ssmlText, // SSML input for the TTS API
+          ...requestBody,
+          ssml,
           languageCode: correctLanguageCode,
           voice: selectedVoice,
-          playWithoutSaving, // Include the "Record Without Saving" option
         }),
       });
-  
-      console.log('API Response Status:', response.status);
-      console.log('API Response Text:', await response.text());
-  
-      if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error('Invalid request. Please check your input.');
-        } else if (response.status === 401) {
-          throw new Error('Unauthorized. Please check your API key.');
-        } else if (response.status === 500) {
-          throw new Error('Server error. Please try again later.');
-        } else {
-          throw new Error(`Unexpected error: ${response.statusText}`);
-        }
-      }
-  
+
+      if (!response.ok) throw new Error('Failed to generate speech');
       const data = await response.json();
-      console.log('TTS API response:', data);
-  
-      if (playWithoutSaving) {
-        if (!data.audioBase64) {
-          throw new Error('Missing audioBase64 in API response');
-        }
-  
-        const newSample = {
-          id: Date.now(),
-          base64: data.audioBase64,
-          path: null,
-        };
-  
-        setAudioSamples((prevSamples) => [...prevSamples, newSample]);
-      } else {
-        if (!data.link) {
-          throw new Error('Missing link in API response');
-        }
-  
-        const newSample = {
-          id: Date.now(),
-          base64: null,
-          path: data.link,
-        };
-  
-        setAudioSamples((prevSamples) => [...prevSamples, newSample]);
-      }
-    } catch (error) {
-      console.error('Error generating speech:', error);
-      alert('Error: ' + error.message);
+
+      const newSample = {
+        id: Date.now(),
+        base64: data.audioBase64 || null,
+        path: data.link || null,
+      };
+
+      setAudioSamples((prev) => [...prev, newSample]);
+    } catch (err) {
+      alert('Error: ' + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = (id) => {
-    setAudioSamples((prevSamples) => prevSamples.filter((sample) => sample.id !== id));
+    setAudioSamples((prev) => prev.filter((sample) => sample.id !== id));
+  };
+
+  const handleResetSSML = () => {
+    setSSML('');
   };
 
   return (
     <div className="container">
       <h1 className="title">SSML Text-to-Speech</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        console.log('handleSubmit called');
-        {/* SSML Input Field */}
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit({}); }}>
         <div>
           <label htmlFor="ssml-input">
-            <strong>SSML Input:</strong>
+            <strong>SSML:</strong>
           </label>
           <textarea
             id="ssml-input"
-            value={ssmlText}
-            onChange={(e) => setSsmlText(e.target.value)}
-            placeholder="<speak>Enter SSML here</speak>"
+            value={ssml}
+            onChange={(e) => setSSML(e.target.value)}
+            placeholder="<speak>Hello world</speak>"
             required
-            aria-describedby="ssml-input-desc"
           />
-          <small id="ssml-input-desc">
-            Enter valid SSML markup to define the speech synthesis behavior.
-          </small>
+          <button type="button" onClick={handleResetSSML}>
+            Reset SSML
+          </button>
         </div>
 
-        {/* Language Code Selection */}
         <div>
           <label htmlFor="language-code">
             <strong>Language Code:</strong>
@@ -198,7 +93,6 @@ const SSMLTextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
             id="language-code"
             value={languageCode}
             onChange={(e) => setLanguageCode(e.target.value)}
-            aria-label="Select Language Code"
           >
             <option value="en-US">English (US)</option>
             <option value="en-GB">English (UK)</option>
@@ -206,7 +100,6 @@ const SSMLTextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
           </select>
         </div>
 
-        {/* Voice Selection */}
         <div>
           <label htmlFor="voice-select">
             <strong>Voice:</strong>
@@ -215,48 +108,62 @@ const SSMLTextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
             id="voice-select"
             value={selectedVoice}
             onChange={(e) => setSelectedVoice(e.target.value)}
-            aria-label="Select Voice"
-            required
           >
-            {filteredVoices.length > 0 ? (
-              filteredVoices.map((voice) => (
-                <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
-                  {voice.formattedName} ({voice.languageCodes.join(', ')})
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>
-                No voices available
+            {filteredVoices.map((voice) => (
+              <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
+                {voice.formattedName} ({voice.languageCodes.join(', ')})
               </option>
-            )}
+            ))}
           </select>
         </div>
 
-        {/* Record Without Saving Option */}
         <div>
-          <label htmlFor="play-without-saving">
-            <strong>Record Without Saving:</strong>
+          <label>
+            <strong>Speaking Rate:</strong>
           </label>
           <input
-            type="checkbox"
-            id="play-without-saving"
-            checked={playWithoutSaving}
-            onChange={(e) => setPlayWithoutSaving(e.target.checked)}
+            type="number"
+            min="0.25"
+            max="4.0"
+            step="0.1"
+            value={speakingRate}
+            onChange={(e) => setSpeakingRate(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>
+            <strong>Pitch:</strong>
+          </label>
+          <input
+            type="number"
+            min="-20.0"
+            max="20.0"
+            step="0.1"
+            value={pitch}
+            onChange={(e) => setPitch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label>
+            <strong>Volume Gain (dB):</strong>
+          </label>
+          <input
+            type="number"
+            min="-96.0"
+            max="16.0"
+            step="0.1"
+            value={volumeGainDb}
+            onChange={(e) => setVolumeGainDb(e.target.value)}
           />
         </div>
 
-        {/* Submit Button */}
-        <button type="submit" disabled={loading} aria-label="Submit Form">
-          {loading ? 'Generating...' : 'Generate Speech'}
+        <button type="submit" disabled={loading}>
+          {loading ? 'Generating...' : 'Convert SSML to Speech'}
         </button>
       </form>
 
       {loading && <Loader className="loader" />}
-      <GeneratedAudio
-        className="audioSamples"
-        audioSamples={audioSamples}
-        onDelete={handleDelete}
-      />
+      <GeneratedAudio audioSamples={audioSamples} onDelete={handleDelete} />
     </div>
   );
 };

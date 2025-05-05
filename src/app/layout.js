@@ -16,6 +16,7 @@ export default function RootLayout({ children }) {
             <Link href="/ttsList">TTS List</Link>
             <Link href="/imageTools">Image Tools</Link>
             <Link href="/possibleFeatures">Possible Features</Link>
+            <Link href="/mergeTools">Merge Tools</Link>
             
           </nav>
         </header>

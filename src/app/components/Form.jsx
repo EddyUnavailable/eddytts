@@ -14,6 +14,8 @@ const Form = ({
   setPitch,
   volumeGainDb,
   setVolumeGainDb,
+  playWithoutSaving, // Add this prop
+  setPlayWithoutSaving, // Add this prop
   handleSubmit,
   loading,
 }) => {
@@ -28,6 +30,8 @@ const Form = ({
       volumeGainDb: parseFloat(volumeGainDb) || 0, // Fallback to default
     });
   };
+  console.log('playWithoutSaving:', playWithoutSaving);
+  console.log('setPlayWithoutSaving:', setPlayWithoutSaving);
 
   // Function to format the voice name
   const formatVoiceName = (originalName) => {
@@ -148,6 +152,20 @@ const Form = ({
           value={volumeGainDb}
           onChange={(e) => setVolumeGainDb(e.target.value)}
           aria-label="Set Volume Gain"
+        />
+      </div>
+
+      {/* Play Without Saving Checkbox */}
+      <div>
+        <label htmlFor="play-without-saving">
+          <strong>Play Without Saving:</strong>
+        </label>
+        <input
+          id="play-without-saving"
+          type="checkbox"
+          checked={playWithoutSaving}
+          onChange={(e) => setPlayWithoutSaving(e.target.checked)} // Use setPlayWithoutSaving
+          aria-label="Toggle Play Without Saving"
         />
       </div>
 

@@ -12,13 +12,20 @@ export const getTTSClient = () => {
 };
 
 // Helper function to validate TTS request parameters
-export const validateTTSRequest = (body) => {
-  const requiredFields = ['text', 'voice', 'languageCode'];
+export function validateTTSRequest(body) {
+  const requiredFields = ['voice', 'languageCode'];
+
+  // If SSML is used, allow either `text` or `ssml`
+  if (!body.ssml) {
+    requiredFields.push('text');
+  }
+
   requiredFields.forEach((field) => {
     if (!body[field]) {
       throw new Error(`Missing required parameter: ${field}`);
     }
   });
+
 
   if (!['MP3', 'LINEAR16', 'OGG_OPUS'].includes(body.format || 'MP3')) {
     throw new Error('Invalid audio format. Supported formats are MP3, LINEAR16, and OGG_OPUS.');
