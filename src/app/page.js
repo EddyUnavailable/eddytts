@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import styles from './css/layout.module.css';
+import styles from './css/main.module.css';
 import VoiceListPreview from './components/VoiceListPreview';
 import { AudioPlayerProvider } from './components/AudioPlayerContext';
 import { useVoices } from './hooks/useVoices';

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import './globals.css'; // If you have a global CSS file
+import './globals.css';
+import styles from './css/layout.module.css'; // ✅ Import the CSS module
 import { AudioPlayerProvider } from './components/AudioPlayerContext';
 
 export const metadata = {
@@ -10,20 +11,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      
       <body>
-      <AudioPlayerProvider>
-        <header style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
-          <nav style={{ display: 'flex', gap: '1rem' }}>
-            <Link href="/">Home</Link>
-            <Link href="/ttsList">TTS List</Link>
-            <Link href="/imageTools">Image Tools</Link>
-            <Link href="/possibleFeatures">Possible Features</Link>
-            <Link href="/mergeTools">Merge Tools</Link>
-            
-          </nav>
-        </header>
-        <main style={{ padding: '2rem' }}>{children}</main>
+        <AudioPlayerProvider>
+          <header className={styles.header}>
+            <nav className={styles.nav}>
+              <Link href="/">Home</Link>
+              <Link href="/ttsList">TTS List</Link>
+              <Link href="/imageTools">Image Tools</Link>
+              <Link href="/possibleFeatures">Possible Features</Link>
+              <Link href="/mergeTools">Merge Tools</Link>
+            </nav>
+          </header>
+          <main className={styles.main}>{children}</main>
         </AudioPlayerProvider>
       </body>
     </html>

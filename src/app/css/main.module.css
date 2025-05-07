@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .leftPane {
+    width: 50%;
+    border-right: 1px solid #ccc;
+    padding: 20px;
+  }
+  
+  .rightPane {
+    width: 50%;
+    padding: 20px;
+  }

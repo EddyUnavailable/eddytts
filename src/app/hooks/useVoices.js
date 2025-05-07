@@ -1,19 +1,27 @@
 // app/hooks/useVoices.js
 import { useEffect, useState } from "react";
 
-// Custom hook to fetch and format voice data
 export function useVoices(apiEndpoint = "/api/tts/voices") {
   const [voices, setVoices] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const formatVoiceName = (originalName) => {
-    const parts = originalName.split("-");
-    const type = parts.slice(2, parts.length - 1).join("-");
-    const region = parts[1];
-    const name = parts[parts.length - 1];
-    return `${name}-${type}-${region}`;
+  const nameKey = {
+    Chirp3: 'C3',
+    Zubenelgenubi: 'Zub',
+    Polyglot: 'PG',
+    Studio: 'ST',
+    // Add more mappings as needed
   };
+
+  function formatVoiceName(name) {
+    let cleaned = name.replace(/^en-/, '');
+    Object.keys(nameKey).forEach((longName) => {
+      cleaned = cleaned.replace(longName, nameKey[longName]);
+    });
+    return cleaned;
+  }
 
   useEffect(() => {
     const fetchVoices = async () => {
@@ -24,14 +32,12 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
         }
 
         const data = await response.json();
-
         if (!data.voices || !Array.isArray(data.voices)) {
           throw new Error("Invalid response format: 'voices' is missing or not an array.");
         }
 
         const formattedVoices = data.voices.map((voice) => {
           if (!voice.name || !voice.languageCodes || !voice.ssmlGender) return null;
-
           return {
             ...voice,
             formattedName: formatVoiceName(voice.name),
@@ -55,5 +61,24 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
     fetchVoices();
   }, [apiEndpoint]);
 
-  return { voices, loading, error };
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('favorites');
+    if (savedFavorites) {
+      setFavorites(JSON.parse(savedFavorites));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const toggleFavorite = (voiceName) => {
+    setFavorites(prev =>
+      prev.includes(voiceName)
+        ? prev.filter(name => name !== voiceName)
+        : [...prev, voiceName]
+    );
+  };
+
+  return { voices, favorites, toggleFavorite, loading, error };
 }
