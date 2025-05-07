@@ -1,48 +1,39 @@
-"use client";
-import React, { useState, useEffect } from 'react';
-import Image from "next/image";
-import styles from "./page.module.css";
-import Link from 'next/link';
-import TextToSpeech from './components/TextToSpeech';
+'use client';
+import React, { useState } from 'react';
+import styles from './css/layout.module.css';
 import VoiceListPreview from './components/VoiceListPreview';
-import SSMLTextToSpeech from './components/SSMLTextToSpeech';
-import VoiceProvider from "./components/VoiceProvider";
-
+import { AudioPlayerProvider } from './components/AudioPlayerContext';
+import { useVoices } from './hooks/useVoices';
+import AudioControlPanel from "./components/GeneratedAudio";
 
 export default function HomePage() {
-  const [voices, setVoices] = useState([]); // Initialize voices state
-  const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/tts'; // Use environment variable
+  const [currentComponent, setCurrentComponent] = useState('VoiceList');
+  const { voices, loading, error } = useVoices();
 
-  // Fetch voices from the API
-  useEffect(() => {
-    const fetchVoices = async () => {
-      try {
-        const response = await fetch(`${apiEndpoint}/voices`, { method: 'GET' });
-        if (!response.ok) throw new Error('Failed to fetch voices');
-
-        const data = await response.json();
-        setVoices(data.voices || []); // Set the fetched voices
-      } catch (error) {
-        console.error('Error fetching voices:', error);
-      }
-    };
-
-    fetchVoices();
-  }, [apiEndpoint]);
+  const toggleComponent = () => {
+    setCurrentComponent((prev) =>
+      prev === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'
+    );
+  };
 
   return (
-    <div>
-      <div>
-        <p>Just some info here</p>
-          <VoiceProvider>
-            <TextToSpeech />
-          </VoiceProvider>
-          <VoiceProvider>
-            <SSMLTextToSpeech />
-          </VoiceProvider>
-          <h1>Voice Preview Tool</h1>
-          <VoiceListPreview voices={voices} apiEndpoint={apiEndpoint} />
+    <AudioPlayerProvider>
+      <div className={styles.container}>
+        {/* Left Pane: Component switcher (TextToSpeech/SSMLTextToSpeech) - temporarily disabled */}
+        <div className={styles.leftPane}>
+          <h2>Text-to-Speech apps temporarily disabled</h2>
+          <button onClick={toggleComponent}>
+            Switch to {currentComponent === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'}
+          </button>
+        </div>
+        <AudioControlPanel />
+        {/* Right Pane: VoiceListPreview */}
+        <div className={styles.rightPane}>
+          {loading && <p>Loading voices...</p>}
+          {error && <p>Error: {error}</p>}
+          {!loading && !error && <VoiceListPreview voices={voices} />}
+        </div>
       </div>
-    </div>
+    </AudioPlayerProvider>
   );
 }

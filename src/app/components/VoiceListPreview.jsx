@@ -1,114 +1,113 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import styles from "/home/eddy/workshop/eddytts/src/app/css/voiceListPreview.module.css";
+import React, { useState, useEffect, useMemo } from "react";
+import styles from "../css/voiceListPreview.module.css";
+import { useAudioPlayer } from "./AudioPlayerContext";
 
-const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
+// Utility function to format voice names
+const formatVoiceName = (name) => {
+  const parts = name.split("-");
+  const type = parts.slice(2, parts.length - 1).join("-");
+  const region = parts[1];
+  const person = parts[parts.length - 1];
+  return `${person}-${type}-${region}`;
+};
+
+const VoiceListPreview = ({ voices = [], apiEndpoint = "/api/tts" }) => {
   const [loading, setLoading] = useState(false);
   const [currentVoice, setCurrentVoice] = useState(null);
-  const [activeAudio, setActiveAudio] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [sortedVoices, setSortedVoices] = useState([]);
+  const [activeAudio, setActiveAudio] = useState(null); // ✅ Add state for activeAudio
+  const { playBase64 } = useAudioPlayer();
 
-  // Load favorites from local storage on mount
+  // Load favorites from localStorage
   useEffect(() => {
-    const savedFavorites = JSON.parse(localStorage.getItem("favorites")) || [];
-    setFavorites(savedFavorites);
+    const saved = localStorage.getItem("favorites");
+    setFavorites(saved ? JSON.parse(saved) : []);
   }, []);
 
-  // Save favorites to local storage whenever they change
+  // Save favorites to localStorage
   useEffect(() => {
     localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
 
-  // Cleanup active audio on component unmount
+  // Clean up activeAudio on unmount
   useEffect(() => {
     return () => {
       if (activeAudio) {
         activeAudio.pause();
         activeAudio.currentTime = 0;
-        setActiveAudio(null);
       }
     };
   }, [activeAudio]);
 
-  // Function to rearrange voice name
-  const formatVoiceName = (originalName) => {
-    const parts = originalName.split("-"); // Split the name by dashes
-    const type = parts.slice(2, parts.length - 1).join("-"); // Extract the type (e.g., Chirp3-HD)
-    const region = parts[1]; // Extract the region (e.g., US, UK, AU)
-    const name = parts[parts.length - 1]; // Extract the actual name (e.g., Achernar)
-
-    return `${name}-${type}-${region}`; // Rearrange the components
-  };
-
-  // Sort voices by name on component mount or when voices change
-  useEffect(() => {
-    const sorted = [...voices].sort((a, b) => {
-      const nameA = formatVoiceName(a.name).toLowerCase();
-      const nameB = formatVoiceName(b.name).toLowerCase();
-      return nameA.localeCompare(nameB); // Compare alphabetically
-    });
-    setSortedVoices(sorted);
+  // Memoize sorted voices
+  const sortedVoices = useMemo(() => {
+    return [...voices].sort((a, b) =>
+      formatVoiceName(a.name).localeCompare(formatVoiceName(b.name))
+    );
   }, [voices]);
 
-  // Function to preview a voice
   const handlePreview = async (voiceName) => {
     if (loading) return;
-
+  
     console.log("Previewing voice:", voiceName);
-
+  
     const selectedVoiceObj = voices.find((voice) => voice.name === voiceName);
-
     if (!selectedVoiceObj) {
       console.error("Voice not found:", voiceName);
-      return alert("Invalid voice selection.");
+      alert("Invalid voice selection.");
+      return;
     }
-
+  
+    // Get the language code from the selected voice
+    const languageCode = selectedVoiceObj.languageCodes[0];
+  
     setLoading(true);
     setCurrentVoice(voiceName);
-
+  
     try {
       const response = await fetch(`${apiEndpoint}/preview`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+        headers: { 
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEXT_PUBLIC_TTS_API_KEY // Add the API key
+        },
+        body: JSON.stringify({ 
           voice: voiceName,
+          languageCode: languageCode, // Add the language code
+          text: "This is a voice preview." // Optional: use default from server
         }),
       });
-
+  
       if (!response.ok) {
-        throw new Error("Failed to generate preview");
+        const errorData = await response.text();
+        throw new Error(
+          errorData || `Preview failed with status: ${response.status}`
+        );
       }
-
+  
       const data = await response.json();
-
+      console.log("API Response:", data);
+  
       if (!data.audioBase64) {
-        throw new Error("Preview failed: No audio data received.");
+        throw new Error("No audio data returned from the API.");
       }
-
-      if (activeAudio) {
-        activeAudio.pause();
-        activeAudio.currentTime = 0;
-      }
-
-      const audio = new Audio(`data:audio/mpeg;base64,${data.audioBase64}`);
-      audio.play();
-      setActiveAudio(audio);
+  
+      playBase64(data.audioBase64);
     } catch (error) {
       console.error("Error generating preview:", error);
-      alert("Error generating preview: " + error.message);
+      alert(`Error generating preview: ${error.message}`);
     } finally {
       setLoading(false);
       setCurrentVoice(null);
     }
   };
 
-  // Function to toggle favorite voices
   const toggleFavorite = (voiceName) => {
-    setFavorites((prevFavorites) =>
-      prevFavorites.includes(voiceName)
-        ? prevFavorites.filter((name) => name !== voiceName)
-        : [...prevFavorites, voiceName]
+    setFavorites((prev) =>
+      prev.includes(voiceName)
+        ? prev.filter((v) => v !== voiceName)
+        : [...prev, voiceName]
     );
   };
 
@@ -122,9 +121,16 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
             className={`${styles.voiceListItem} ${
               favorites.includes(voice.name) ? styles.voiceListItemFavorite : ""
             }`}
-            onClick={() => handlePreview(voice.name)} // Trigger preview on name click
+            onClick={() => handlePreview(voice.name)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                handlePreview(voice.name);
+              }
+            }}
+            aria-label={`Preview voice ${voice.name}`}
           >
-            {/* Display formatted voice name with gender-specific color */}
             <span
               className={
                 loading && currentVoice === voice.name
@@ -140,20 +146,21 @@ const VoiceListPreview = ({ voices = [], apiEndpoint }) => {
                     : "black",
               }}
             >
-              {formatVoiceName(voice.name)}
+              {voice.name}
             </span>
-
-            {/* Favorite button */}
             <button
               className={styles.favoriteButton}
               onClick={(e) => {
-                e.stopPropagation(); // Prevent triggering the preview
+                e.stopPropagation();
                 toggleFavorite(voice.name);
               }}
+              aria-label={
+                favorites.includes(voice.name)
+                  ? `Remove ${voice.name} from favorites`
+                  : `Add ${voice.name} to favorites`
+              }
             >
-              {favorites.includes(voice.name)
-                ? "★ Remove Favorite"
-                : "☆ Add to Favorites"}
+              {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
             </button>
           </li>
         ))}

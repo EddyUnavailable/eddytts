@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    // console.log('📥 GET /api/tts/voices received');
+    console.log('📥 GET /api/tts/voices received');
 
     const ttsClient = new textToSpeech.TextToSpeechClient();
     const [response] = await ttsClient.listVoices();
@@ -15,7 +15,7 @@ export async function GET() {
 
     return NextResponse.json({ voices: englishVoices });
   } catch (error) {
-    // console.error('❌ Error fetching voices:', error);
+    console.error('❌ Error fetching voices:', error);
     return NextResponse.json(
       { error: 'Failed to fetch available voices.', details: error.message },
       { status: 500 }

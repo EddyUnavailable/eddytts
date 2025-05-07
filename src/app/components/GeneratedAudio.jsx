@@ -1,43 +1,45 @@
-import React from 'react';
+"use client";
+import React, { useState } from "react";
+import { useAudioPlayer } from "./AudioPlayerContext";
 
-const GeneratedAudio = ({ audioSamples, onDelete }) => {
-  if (audioSamples.length === 0) {
-    return (
-      <div>
-        <h2>No Audio Available</h2>
-        <p>Please generate audio to preview or download it here.</p>
-      </div>
-    );
-  }
+const AudioControlPanel = () => {
+  const { pause, resume, stop, setVolume, isPlaying } = useAudioPlayer();
+  const [volume, setVolumeState] = useState(1);
+
+  const handleVolumeChange = (e) => {
+    const newVolume = parseFloat(e.target.value);
+    setVolumeState(newVolume);
+    setVolume(newVolume);
+  };
 
   return (
-    <div>
-      <h2>Generated Audio Samples:</h2>
-      {audioSamples.map((sample) => (
-        <div key={sample.id} style={{ marginBottom: '16px' }}>
-          {sample.base64 ? (
-            <audio controls aria-label="Generated audio preview">
-              <source src={`data:audio/mpeg;base64,${sample.base64}`} type="audio/mpeg" />
-              Your browser does not support the audio element.
-            </audio>
-          ) : (
-            <div>
-              <audio controls aria-label="Generated MP3 preview">
-                <source src={sample.path} type="audio/mpeg" />
-                Your browser does not support the audio element.
-              </audio>
-              <p>
-                <a href={sample.path} target="_blank" rel="noopener noreferrer">
-                  Download MP3
-                </a>
-              </p>
-            </div>
-          )}
-          <button onClick={() => onDelete(sample.id)}>Delete</button>
-        </div>
-      ))}
+    <div style={{ 
+      position: 'fixed', bottom: 60, left: 10, 
+      backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc', 
+      borderRadius: '8px', zIndex: 1000 
+    }}>
+      <div>
+        <button onClick={isPlaying ? pause : resume}>
+          {isPlaying ? "Pause" : "Resume"}
+        </button>
+        <button onClick={stop} style={{ marginLeft: '10px' }}>
+          Stop
+        </button>
+      </div>
+      <div style={{ marginTop: '10px' }}>
+        <label htmlFor="volume">Volume: </label>
+        <input
+          id="volume"
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={handleVolumeChange}
+        />
+      </div>
     </div>
   );
 };
 
-export default GeneratedAudio;
+export default AudioControlPanel;

@@ -41,3 +41,45 @@
   .favoriteButton:hover {
     background-color: #e6e6e6;
   }
+
+  .voiceListContainer {
+    display: flex;
+    flex-wrap: wrap; /* Allows items to wrap into rows/columns */
+    gap: 10px; /* Space between items */
+  }
+  
+  .voiceListItem {
+    display: flex;
+    align-items: center;
+    width: 150px; /* Total width for voice output and button */
+    height: 50px; /* Fixed height */
+    border: 1px solid #ccc;
+    padding: 5px;
+    border-radius: 5px;
+    justify-content: space-between;
+  }
+  
+  .voiceName {
+    width: 100px; /* Fixed width for the voice output */
+    height: 50px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .favoriteButton {
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .favoriteButton:hover {
+    background-color: #e0e0e0;
+  }

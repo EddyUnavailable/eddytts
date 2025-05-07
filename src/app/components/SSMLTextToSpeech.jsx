@@ -1,220 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import Form from './Form';
-import GeneratedAudio from './GeneratedAudio';
-import Loader from './Loader';
-import '../css/textToSpeech.css';
+"use client";
+import React, { useState, useEffect } from "react";
+import styles from "../css/voiceListPreview.module.css"; // adjust as needed
 
-const SSMLTextToSpeech = ({ apiEndpoint = '/api/tts' }) => {
-  const [ssmlText, setSsmlText] = useState('');
-  const [languageCode, setLanguageCode] = useState('en-US');
-  const [voices, setVoices] = useState([]);
-  const [filteredVoices, setFilteredVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState('');
-  const [speakingRate, setSpeakingRate] = useState(1.0);
-  const [pitch, setPitch] = useState(0);
-  const [volumeGainDb, setVolumeGainDb] = useState(0);
-  const [audioSamples, setAudioSamples] = useState([]);
-  const [playWithoutSaving, setPlayWithoutSaving] = useState(false);
+const VoiceListPreview = ({ voices = [], apiEndpoint = "/api/tts" }) => {
   const [loading, setLoading] = useState(false);
+  const [currentVoice, setCurrentVoice] = useState(null);
+  const [activeAudio, setActiveAudio] = useState(null);
+  const [favorites, setFavorites] = useState([]);
+  const [sortedVoices, setSortedVoices] = useState([]);
 
-  const formatVoiceName = (originalName) => {
-    const parts = originalName.split('-');
-    const type = parts.slice(2, parts.length - 1).join('-');
-    const region = parts[1];
-    const name = parts[parts.length - 1];
-    return `${name}-${type}-${region}`;
-  };
-
+  // Load favorites from localStorage
   useEffect(() => {
-    const fetchVoices = async () => {
-      try {
-        const response = await fetch(`${apiEndpoint}/voices`);
-        if (!response.ok) throw new Error('Failed to fetch voices');
+    const saved = localStorage.getItem("favorites");
+    setFavorites(saved ? JSON.parse(saved) : []);
+  }, []);
 
-        const data = await response.json();
-        const formattedVoices = data.voices.map((voice) => ({
-          ...voice,
-          formattedName: formatVoiceName(voice.name),
-          color:
-            voice.ssmlGender === 'MALE'
-              ? 'blue'
-              : voice.ssmlGender === 'FEMALE'
-              ? 'pink'
-              : 'black',
-        }));
+  // Save favorites when changed
+  useEffect(() => {
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+  }, [favorites]);
 
-        setVoices(formattedVoices || []);
-      } catch (error) {
-        console.error('Error fetching voices:', error);
-        alert('Error fetching voices: ' + error.message);
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
       }
     };
+  }, [activeAudio]);
 
-    fetchVoices();
-  }, [apiEndpoint]);
-
+  // Format and sort voices when prop updates
   useEffect(() => {
-    const filtered = voices.filter((voice) =>
-      voice.languageCodes.includes(languageCode)
+    const formatVoiceName = (originalName) => {
+      const parts = originalName.split("-");
+      const type = parts.slice(2, parts.length - 1).join("-");
+      const region = parts[1];
+      const name = parts[parts.length - 1];
+      return `${name}-${type}-${region}`;
+    };
+
+    const sorted = [...voices].sort((a, b) =>
+      formatVoiceName(a.name).localeCompare(formatVoiceName(b.name))
     );
-    setFilteredVoices(filtered);
-    setSelectedVoice(filtered[0]?.name || '');
-  }, [languageCode, voices]);
+    setSortedVoices(sorted);
+  }, [voices]);
 
-  const formatSSML = (text) => {
-    if (!text.startsWith('<speak>')) text = `<speak>${text}`;
-    if (!text.endsWith('</speak>')) text += '</speak>';
-    return text;
-  };
+  const handlePreview = async (voiceName) => {
+    if (loading) return;
+    const selectedVoice = voices.find((v) => v.name === voiceName);
+    if (!selectedVoice) return alert("Voice not found.");
 
-  const handleSubmit = async () => {
-    if (!selectedVoice) {
-      return alert('Please select a voice!');
-    }
-
-    const selectedVoiceObj = voices.find((voice) => voice.name === selectedVoice);
-    if (!selectedVoiceObj) {
-      return alert('Invalid voice selection.');
-    }
-
-    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
     setLoading(true);
+    setCurrentVoice(voiceName);
 
     try {
-      const payload = {
-        text: formatSSML(ssmlText),
-        ssml: true,
-        voice: selectedVoice,
-        languageCode: correctLanguageCode,
-        audioConfig: {
-          audioEncoding: 'MP3',
-          speakingRate,
-          pitch,
-          volumeGainDb,
-          sampleRateHertz: 24000,
-        },
-        playWithoutSaving,
-      };
-
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const res = await fetch(`${apiEndpoint}/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voice: voiceName }),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || 'Failed to generate audio.');
+      const { audioBase64 } = await res.json();
+      if (!audioBase64) throw new Error("No audio returned.");
+
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
       }
 
-      const data = await response.json();
-      const newSample = playWithoutSaving
-        ? { id: Date.now(), base64: data.audioBase64 || null, path: null }
-        : { id: Date.now(), base64: null, path: data.link || null };
-
-      setAudioSamples((prev) => [...prev, newSample]);
-    } catch (error) {
-      console.error('Error generating speech:', error);
-      alert('Error: ' + error.message);
+      const audio = new Audio(`data:audio/mpeg;base64,${audioBase64}`);
+      audio.play();
+      setActiveAudio(audio);
+    } catch (err) {
+      alert("Preview error: " + err.message);
+      console.error(err);
     } finally {
       setLoading(false);
+      setCurrentVoice(null);
     }
   };
 
-  const handleReset = () => {
-    setSsmlText('');
-  };
-
-  const handleDelete = (id) => {
-    setAudioSamples((prev) => prev.filter((sample) => sample.id !== id));
+  const toggleFavorite = (voiceName) => {
+    setFavorites((prev) =>
+      prev.includes(voiceName)
+        ? prev.filter((v) => v !== voiceName)
+        : [...prev, voiceName]
+    );
   };
 
   return (
-    <div className="container">
-      <h1 className="title">SSML Text-to-Speech</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleSubmit();
-        }}
-      >
-        {/* SSML Input */}
-        <div>
-          <label htmlFor="ssml-input"><strong>SSML Input:</strong></label>
-          <textarea
-            id="ssml-input"
-            value={ssmlText}
-            onChange={(e) => setSsmlText(e.target.value)}
-            placeholder="<speak>Enter SSML here</speak>"
-            required
-          />
-        </div>
-
-        {/* Language Selection */}
-        <div>
-          <label htmlFor="language-code"><strong>Language Code:</strong></label>
-          <select
-            id="language-code"
-            value={languageCode}
-            onChange={(e) => setLanguageCode(e.target.value)}
+    <div>
+      <h2>Voice Preview List</h2>
+      <ul className={styles.voiceListContainer}>
+        {sortedVoices.map((voice) => (
+          <li
+            key={voice.name}
+            className={`${styles.voiceListItem} ${
+              favorites.includes(voice.name) ? styles.voiceListItemFavorite : ""
+            }`}
+            onClick={() => handlePreview(voice.name)}
           >
-            <option value="en-US">English (US)</option>
-            <option value="en-GB">English (UK)</option>
-            <option value="en-AU">English (AU)</option>
-          </select>
-        </div>
-
-        {/* Voice Selection */}
-        <div>
-          <label htmlFor="voice-select"><strong>Voice:</strong></label>
-          <select
-            id="voice-select"
-            value={selectedVoice}
-            onChange={(e) => setSelectedVoice(e.target.value)}
-            required
-          >
-            {filteredVoices.length > 0 ? (
-              filteredVoices.map((voice) => (
-                <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
-                  {voice.formattedName} ({voice.languageCodes.join(', ')})
-                </option>
-              ))
-            ) : (
-              <option value="" disabled>No voices available</option>
-            )}
-          </select>
-        </div>
-
-        {/* Record Without Saving */}
-        <div>
-          <label htmlFor="play-without-saving"><strong>Play Without Saving:</strong></label>
-          <input
-            type="checkbox"
-            id="play-without-saving"
-            checked={playWithoutSaving}
-            onChange={(e) => setPlayWithoutSaving(e.target.checked)}
-          />
-        </div>
-
-        {/* Buttons */}
-        <div style={{ marginTop: '1rem' }}>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Speech'}
-          </button>
-          <button type="button" onClick={handleReset} style={{ marginLeft: '1rem' }}>
-            Reset
-          </button>
-        </div>
-      </form>
-
-      {loading && <Loader className="loader" />}
-      <GeneratedAudio
-        className="audioSamples"
-        audioSamples={audioSamples}
-        onDelete={handleDelete}
-      />
+            <span
+              className={
+                loading && currentVoice === voice.name
+                  ? styles.voiceNameLoading
+                  : styles.voiceName
+              }
+              style={{
+                color:
+                  voice.ssmlGender === "MALE"
+                    ? "blue"
+                    : voice.ssmlGender === "FEMALE"
+                    ? "pink"
+                    : "black",
+              }}
+            >
+              {voice.formattedName || voice.name}
+            </span>
+            <button
+              className={styles.favoriteButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFavorite(voice.name);
+              }}
+            >
+              {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
 
-export default SSMLTextToSpeech;
+export default VoiceListPreview;

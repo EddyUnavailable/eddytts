@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import './globals.css'; // If you have a global CSS file
+import { AudioPlayerProvider } from './components/AudioPlayerContext';
 
 export const metadata = {
   title: 'TTS AI Explorer',
@@ -9,7 +10,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      
       <body>
+      <AudioPlayerProvider>
         <header style={{ padding: '1rem', backgroundColor: '#f0f0f0' }}>
           <nav style={{ display: 'flex', gap: '1rem' }}>
             <Link href="/">Home</Link>
@@ -21,6 +24,7 @@ export default function RootLayout({ children }) {
           </nav>
         </header>
         <main style={{ padding: '2rem' }}>{children}</main>
+        </AudioPlayerProvider>
       </body>
     </html>
   );
