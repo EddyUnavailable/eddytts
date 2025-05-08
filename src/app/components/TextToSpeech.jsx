@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useRef } from 'react';
-import { useVoices } from '../hooks/useVoices';
-import styles from '../css/textToSpeech.module.css';
+import React, { useState, useRef } from "react";
+import { useVoices } from "../hooks/useVoices";
+import styles from "../css/textToSpeech.module.css"; // Adjust as needed
 
 const TextToSpeech = () => {
   const { voices, loading, error } = useVoices();
@@ -19,6 +19,11 @@ const TextToSpeech = () => {
     setText(e.target.value);
   };
 
+  // Format the text to SSML before sending it to the backend
+  const formatToSSML = (text) => {
+    return `<speak>${text}</speak>`;
+  };
+
   const handlePlay = async () => {
     if (!selectedVoice || !text.trim()) {
       alert("Please select a voice and enter some text.");
@@ -27,20 +32,22 @@ const TextToSpeech = () => {
 
     setIsGenerating(true);
     try {
-      const selectedVoiceObj = voices.find(v => v.name === selectedVoice);
+      const selectedVoiceObj = voices.find((v) => v.name === selectedVoice);
       const languageCode = Array.isArray(selectedVoiceObj?.languageCodes)
         ? selectedVoiceObj.languageCodes[0]
-        : 'en-US';
+        : "en-US";
 
-      const response = await fetch('/api/tts/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const ssmlText = formatToSSML(text); // Format the text to SSML
+
+      const response = await fetch("/api/tts/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text,
+          text: ssmlText, // Send SSML formatted text
           voice: selectedVoice,
           languageCode,
-          playWithoutSaving: true
-        })
+          playWithoutSaving: true,
+        }),
       });
 
       if (!response.ok) {
@@ -92,9 +99,15 @@ const TextToSpeech = () => {
           onChange={handleVoiceChange}
           aria-label="Select a voice"
         >
-          <option value="" disabled>Select a voice</option>
+          <option value="" disabled>
+            Select a voice
+          </option>
           {voices.map((voice) => (
-            <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
+            <option
+              key={voice.name}
+              value={voice.name}
+              style={{ color: voice.color }}
+            >
               {voice.formattedName || voice.name} ({voice.languageCode})
             </option>
           ))}
@@ -121,13 +134,18 @@ const TextToSpeech = () => {
           disabled={!selectedVoice || !text.trim() || isGenerating}
           className={styles.playButton}
         >
-          {isGenerating ? 'Processing...' : 'Play'}
+          {isGenerating ? "Processing..." : "Play"}
         </button>
       </div>
 
       {audioUrl && (
         <div className={styles.audioControls}>
-          <audio ref={audioRef} controls src={audioUrl} className={styles.audioPlayer}>
+          <audio
+            ref={audioRef}
+            controls
+            src={audioUrl}
+            className={styles.audioPlayer}
+          >
             Your browser does not support the audio element.
           </audio>
         </div>

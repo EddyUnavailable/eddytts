@@ -1,22 +1,38 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './css/main.module.css';
 import VoiceListPreview from './components/VoiceListPreview';
 import { AudioPlayerProvider } from './components/AudioPlayerContext';
 import { useVoices } from './hooks/useVoices';
 import AudioControlPanel from './components/GeneratedAudio';
 import TextToSpeech from './components/TextToSpeech';
+import SSMLTextToSpeech from './components/SSMLTextToSpeech';
 import { useFavorites } from './hooks/useFavorites';
 
-export default function HomePage() {
-  const { voices, loading, error } = useVoices();  // Voices fetched from API
-  const { favorites, toggleFavorite } = useFavorites();  // Favorites and toggle functionality
+const STORAGE_KEY = 'ttsSelectedComponent';
 
-  const [currentComponent, setCurrentComponent] = useState('VoiceList');
+export default function HomePage() {
+  const { voices, loading, error } = useVoices();
+  const { favorites, toggleFavorite } = useFavorites();
+
+  const [currentComponent, setCurrentComponent] = useState('TextToSpeech');
+
+  // Load component state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === 'TextToSpeech' || saved === 'SSMLTextToSpeech') {
+      setCurrentComponent(saved);
+    }
+  }, []);
+
+  // Save component state to localStorage on change
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, currentComponent);
+  }, [currentComponent]);
 
   const toggleComponent = () => {
     setCurrentComponent((prev) =>
-      prev === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'
+      prev === 'TextToSpeech' ? 'SSMLTextToSpeech' : 'TextToSpeech'
     );
   };
 
@@ -24,13 +40,16 @@ export default function HomePage() {
     <AudioPlayerProvider>
       <div className={styles.container}>
         <div className={styles.leftPane}>
-          <div className={styles.col}>Text-to-Speech apps temporarily disabled</div>
           <div className={styles.col}>
             <button onClick={toggleComponent}>
-              Switch to {currentComponent === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'}
+              Switch to {currentComponent === 'TextToSpeech' ? 'SSML Editor' : 'Text-to-Speech'}
             </button>
           </div>
-          <TextToSpeech />
+
+          <div className={styles.col}>
+            {currentComponent === 'TextToSpeech' && <TextToSpeech />}
+            {currentComponent === 'SSMLTextToSpeech' && <SSMLTextToSpeech />}
+          </div>
         </div>
 
         <div className={styles.middlePane}>
@@ -40,7 +59,6 @@ export default function HomePage() {
           <ul>
             {favorites.length > 0 ? (
               favorites.map((voiceName) => {
-                // Find the voice with the matching voiceName and use the formattedName
                 const voice = voices.find((v) => v.name === voiceName);
                 return (
                   <li key={voiceName}>
@@ -56,14 +74,14 @@ export default function HomePage() {
         </div>
 
         <div className={styles.rightPane}>
-          <AudioControlPanel /> {/* Now above VoiceListPreview */}
+          <AudioControlPanel />
           {loading && <p>Loading voices...</p>}
           {error && <p>Error: {error}</p>}
           {!loading && !error && (
             <VoiceListPreview
               voices={voices}
               favorites={favorites}
-              toggleFavorite={toggleFavorite} // Pass toggleFavorite function
+              toggleFavorite={toggleFavorite}
             />
           )}
         </div>
