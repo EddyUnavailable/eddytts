@@ -8,7 +8,7 @@ import AudioControlPanel from "./components/GeneratedAudio";
 
 export default function HomePage() {
   const [currentComponent, setCurrentComponent] = useState('VoiceList');
-  const { voices, loading, error } = useVoices();
+  const { voices, loading, error, favorites, toggleFavorite } = useVoices();
 
   const toggleComponent = () => {
     setCurrentComponent((prev) =>
@@ -19,16 +19,34 @@ export default function HomePage() {
   return (
     <AudioPlayerProvider>
       <div className={styles.container}>
-        {/* Left Pane: Component switcher (TextToSpeech/SSMLTextToSpeech) - temporarily disabled */}
+        
         <div className={styles.leftPane}>
-          <h2>Text-to-Speech apps temporarily disabled</h2>
-          <button onClick={toggleComponent}>
-            Switch to {currentComponent === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'}
-          </button>
+          <div className={styles.col}>Text-to-Speech apps temporarily disabled </div>
+            <button onClick={toggleComponent}>
+              Switch to {currentComponent === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'}
+            </button>
         </div>
-        <AudioControlPanel />
-        {/* Right Pane: VoiceListPreview */}
+        <div className={styles.middlePane}>
+          <div className={styles.col}>
+            <h4>Favourites</h4>
+          </div>
+          <ul>
+            {favorites.length > 0 ? (
+              favorites.map((voiceName) => (
+                <li key={voiceName}>
+                  {voiceName}
+                  <button onClick={() => toggleFavorite(voiceName)}>❌</button>
+                </li>
+              ))
+            ) : (
+              <li>No favorites yet</li>
+            )}
+          </ul>
+        </div>   
+        
         <div className={styles.rightPane}>
+          <AudioControlPanel /> {/* Now above VoiceListPreview */}
+
           {loading && <p>Loading voices...</p>}
           {error && <p>Error: {error}</p>}
           {!loading && !error && <VoiceListPreview voices={voices} />}
