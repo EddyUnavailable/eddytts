@@ -37,3 +37,17 @@
     padding: 10px;
     box-sizing: border-box;
   }
+
+  .audioPlayerContainer {
+    margin-bottom: 20px;
+  }
+  
+  .voiceListContainer {
+    overflow-y: auto;
+    max-height: calc(100vh - 200px); /* Adjust based on your layout */
+  }
+  
+  .favoritesContainer {
+    overflow-y: auto;
+    max-height: 100%;
+  }

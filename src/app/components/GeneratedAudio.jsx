@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useAudioPlayer } from "./AudioPlayerContext";
+import '../css/generatedAudio.module.css'; // Import the CSS file
 
 const AudioControlPanel = () => {
   const { pause, resume, stop, setVolume, isPlaying } = useAudioPlayer();
@@ -13,20 +14,16 @@ const AudioControlPanel = () => {
   };
 
   return (
-    <div style={{ 
-      position: 'fixed', bottom: 60, left: 10, 
-      backgroundColor: '#fff', padding: '10px', border: '1px solid #ccc', 
-      borderRadius: '8px', zIndex: 1000 
-    }}>
+    <div className="audioControlPanel">
       <div>
         <button onClick={isPlaying ? pause : resume}>
           {isPlaying ? "Pause" : "Resume"}
         </button>
-        <button onClick={stop} style={{ marginLeft: '10px' }}>
+        <button onClick={stop} className="stopButton">
           Stop
         </button>
       </div>
-      <div style={{ marginTop: '10px' }}>
+      <div className="volumeControl">
         <label htmlFor="volume">Volume: </label>
         <input
           id="volume"

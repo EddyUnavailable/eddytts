@@ -18,6 +18,7 @@ export default function RootLayout({ children }) {
               <Link href="/">Home</Link>
               <Link href="/ttsList">TTS List</Link>
               <Link href="/imageTools">Image Tools</Link>
+              <Link href="/aiList">A.I</Link>
               <Link href="/possibleFeatures">Possible Features</Link>
               <Link href="/mergeTools">Merge Tools</Link>
             </nav>

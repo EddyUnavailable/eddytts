@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import styles from '../css/audioControlPanel.module.css';
 
 const AudioPlayerContext = createContext();
 
@@ -107,21 +108,23 @@ export function AudioPlayerProvider({ children }) {
   }, []);
 
   return (
-    <AudioPlayerContext.Provider value={{
-      playBase64,
-      pause,
-      resume,
-      stop,
-      setVolume,
-      isPlaying,
-      isLoading,
-      error,
-      currentAudio,
-    }}>
-      {children}
-      <audio ref={audioRef} controls style={{ position: 'fixed', bottom: 10, left: 10 }} />
-    </AudioPlayerContext.Provider>
-  );
+  <AudioPlayerContext.Provider value={{
+    playBase64,
+    pause,
+    resume,
+    stop,
+    setVolume,
+    isPlaying,
+    isLoading,
+    error,
+    currentAudio,
+  }}>
+    {children}
+    <div className={styles.audioPlayerContainer}>
+      <audio ref={audioRef} controls />
+    </div>
+  </AudioPlayerContext.Provider>
+);
 }
 
 export const useAudioPlayer = () => useContext(AudioPlayerContext);

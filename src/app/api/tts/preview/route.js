@@ -9,6 +9,7 @@ export async function POST(req) {
   try {
     // Parse the request body
     const { voice, languageCode, text = 'This is a voice preview.', audioConfig = {} } = await req.json();
+    console.log(`Requested language code: ${languageCode}, Voice: ${voice}`);
 
     // Validate input
     if (!voice || !languageCode) {

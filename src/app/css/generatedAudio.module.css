@@ -1,0 +1,20 @@
+/* generatedAudio.css */
+.audioControlPanel {
+    position: fixed;
+    bottom: 60px;
+    left: 10px;
+    background-color: #fff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    z-index: 1000;
+  }
+  
+  .stopButton {
+    margin-left: 10px;
+  }
+  
+  .volumeControl {
+    margin-top: 10px;
+  }
+  

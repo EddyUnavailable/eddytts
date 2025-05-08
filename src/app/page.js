@@ -5,6 +5,8 @@ import VoiceListPreview from './components/VoiceListPreview';
 import { AudioPlayerProvider } from './components/AudioPlayerContext';
 import { useVoices } from './hooks/useVoices';
 import AudioControlPanel from "./components/GeneratedAudio";
+import TextToSpeech from './components/TextToSpeech';
+
 
 export default function HomePage() {
   const [currentComponent, setCurrentComponent] = useState('VoiceList');
@@ -22,9 +24,11 @@ export default function HomePage() {
         
         <div className={styles.leftPane}>
           <div className={styles.col}>Text-to-Speech apps temporarily disabled </div>
-            <button onClick={toggleComponent}>
+          <div className={styles.col}><button onClick={toggleComponent}> 
+            
               Switch to {currentComponent === 'TextToSpeech' ? 'VoiceList' : 'TextToSpeech'}
-            </button>
+            </button></div>
+            <TextToSpeech />
         </div>
         <div className={styles.middlePane}>
           <div className={styles.col}>

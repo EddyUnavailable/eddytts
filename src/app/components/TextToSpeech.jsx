@@ -1,124 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import Form from './Form';
-import GeneratedAudio from './GeneratedAudio';
-import Loader from './Loader';
-import '../css/textToSpeech.css';
+"use client";
+import React, { useState, useRef } from 'react';
+import { useVoices } from '../hooks/useVoices';
+import styles from '../css/textToSpeech.module.css';
 
-const TextToSpeech = ({ voices = [], apiEndpoint = '/api/tts' }) => {
-  const [text, setText] = useState('');
-  const [languageCode, setLanguageCode] = useState('en-US');
-  const [filteredVoices, setFilteredVoices] = useState([]);
-  const [selectedVoice, setSelectedVoice] = useState('');
-  const [speakingRate, setSpeakingRate] = useState(1.05);
-  const [pitch, setPitch] = useState(0);
-  const [volumeGainDb, setVolumeGainDb] = useState(0);
-  const [playWithoutSaving, setPlayWithoutSaving] = useState(false); // Ensure this is defined
-  const [saveToFile, setSaveToFile] = useState(false); // Add this state
-  const [audioSamples, setAudioSamples] = useState([]);
-  const [loading, setLoading] = useState(false);
+const TextToSpeech = () => {
+  const { voices, loading, error } = useVoices();
+  const [selectedVoice, setSelectedVoice] = useState("");
+  const [text, setText] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [audioUrl, setAudioUrl] = useState("");
+  const audioRef = useRef(null);
 
-  // Filter voices by languageCode
-  useEffect(() => {
-    const filtered = voices.filter((voice) => voice.languageCodes.includes(languageCode));
-    setFilteredVoices(filtered);
-    setSelectedVoice(filtered[0]?.name || ''); // Default to the first voice if available
-  }, [languageCode, voices]);
-  console.log('playWithoutSaving:', playWithoutSaving);
-  console.log('setPlayWithoutSaving:', setPlayWithoutSaving);
+  const handleVoiceChange = (e) => {
+    setSelectedVoice(e.target.value);
+  };
 
-  // Handle form submission
-  const handleSubmit = async (requestBody) => {
-    if (!selectedVoice) return alert('Please select a voice!');
-    const selectedVoiceObj = voices.find((v) => v.name === selectedVoice);
-    if (!selectedVoiceObj) return alert('Invalid voice selection.');
-    const correctLanguageCode = selectedVoiceObj.languageCodes[0];
+  const handleTextChange = (e) => {
+    setText(e.target.value);
+  };
 
-    setLoading(true);
+  const handlePlay = async () => {
+    if (!selectedVoice || !text.trim()) {
+      alert("Please select a voice and enter some text.");
+      return;
+    }
+
+    setIsGenerating(true);
     try {
-      const response = await fetch(apiEndpoint, {
+      const selectedVoiceObj = voices.find(v => v.name === selectedVoice);
+      const languageCode = Array.isArray(selectedVoiceObj?.languageCodes)
+        ? selectedVoiceObj.languageCodes[0]
+        : 'en-US';
+
+      const response = await fetch('/api/tts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...requestBody,
           text,
-          languageCode: correctLanguageCode,
           voice: selectedVoice,
-          playWithoutSaving,
-        }),
+          languageCode,
+          playWithoutSaving: true
+        })
       });
 
       if (!response.ok) {
-        const errorMessage = await response.text();
-        throw new Error(errorMessage || 'Failed to generate speech');
+        const errorText = await response.text();
+        console.error("Server returned error:", errorText);
+        alert("Server error while generating speech.");
+        setIsGenerating(false);
+        return;
       }
 
       const data = await response.json();
-      console.log('TTS API response:', data);
 
-      let newSample;
+      if (data.audioBase64) {
+        const dataUri = `data:audio/mpeg;base64,${data.audioBase64}`;
+        setAudioUrl(dataUri);
 
-      if (playWithoutSaving) {
-        if (!data.audioBase64) {
-          throw new Error('Missing audioBase64 in API response for playWithoutSaving mode.');
+        if (audioRef.current) {
+          audioRef.current.load();
+          audioRef.current.onloadeddata = () => {
+            audioRef.current.play().catch((err) => {
+              console.error("Playback failed:", err);
+            });
+          };
         }
-        newSample = {
-          id: Date.now(),
-          base64: data.audioBase64, // Base64 audio for direct playback
-          path: null,
-        };
       } else {
-        if (!data.link && !data.webContentLink) {
-          throw new Error('Missing link in API response for saved audio.');
-        }
-        newSample = {
-          id: Date.now(),
-          base64: null,
-          path: data.link || data.webContentLink, // Use webContentLink as fallback
-        };
+        alert("No audio returned from server.");
       }
-
-      setAudioSamples((prevSamples) => [...prevSamples, newSample]);
-    } catch (error) {
-      console.error('Error generating speech:', error);
-      alert('Error: ' + error.message);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate speech.");
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  // Handle deletion of audio samples
-  const handleDelete = (id) => {
-    setAudioSamples((prevSamples) => prevSamples.filter((sample) => sample.id !== id));
-  };
+  if (loading) return <p>Loading voices...</p>;
+  if (error) return <p>Error loading voices: {error.message}</p>;
 
   return (
-    <div className="container">
-      <h1 className="title">Text-to-Speech</h1>
-      <Form
-        text={text}
-        setText={setText}
-        languageCode={languageCode}
-        setLanguageCode={setLanguageCode}
-        voices={filteredVoices}
-        selectedVoice={selectedVoice}
-        setSelectedVoice={setSelectedVoice}
-        speakingRate={speakingRate}
-        setSpeakingRate={setSpeakingRate}
-        pitch={pitch}
-        setPitch={setPitch}
-        volumeGainDb={volumeGainDb}
-        setVolumeGainDb={setVolumeGainDb}
-        playWithoutSaving={playWithoutSaving} // Pass playWithoutSaving
-        setPlayWithoutSaving={setPlayWithoutSaving} // Pass setPlayWithoutSaving
-        handleSubmit={handleSubmit}
-        loading={loading}
-      />
-      {loading && <Loader className="loader" />}
-      <GeneratedAudio
-        className="audioSamples"
-        audioSamples={audioSamples}
-        onDelete={handleDelete}
-      />
+    <div className={styles.content}>
+      <div className={styles.controls}>
+        <label htmlFor="voiceSelect" className={styles.label}>
+          Choose a voice:
+        </label>
+        <select
+          id="voiceSelect"
+          className={styles.selectVoice}
+          value={selectedVoice}
+          onChange={handleVoiceChange}
+          aria-label="Select a voice"
+        >
+          <option value="" disabled>Select a voice</option>
+          {voices.map((voice) => (
+            <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
+              {voice.formattedName || voice.name} ({voice.languageCode})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className={styles.textInput}>
+        <label htmlFor="textInput" className={styles.label}>
+          Enter text:
+        </label>
+        <textarea
+          id="textInput"
+          value={text}
+          onChange={handleTextChange}
+          placeholder="Enter text to convert to speech"
+          aria-label="Text to convert to speech"
+          className={styles.textarea}
+        />
+      </div>
+
+      <div className={styles.buttonGroup}>
+        <button
+          onClick={handlePlay}
+          disabled={!selectedVoice || !text.trim() || isGenerating}
+          className={styles.playButton}
+        >
+          {isGenerating ? 'Processing...' : 'Play'}
+        </button>
+      </div>
+
+      {audioUrl && (
+        <div className={styles.audioControls}>
+          <audio ref={audioRef} controls src={audioUrl} className={styles.audioPlayer}>
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      )}
     </div>
   );
 };

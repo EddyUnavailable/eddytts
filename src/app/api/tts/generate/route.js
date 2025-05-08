@@ -7,11 +7,10 @@ import { NextResponse } from 'next/server';
 import { getTTSClient, validateTTSRequest, generateFileName } from './utils';
 
 export async function POST(req) {
-  const TEMP_DIR = os.tmpdir(); // Temporary directory for storing the audio file
+  const TEMP_DIR = os.tmpdir();
   const outputPath = path.join(TEMP_DIR, generateFileName());
 
   try {
-    // Parse and validate the request body
     const body = await req.json();
     validateTTSRequest(body);
 
@@ -25,50 +24,41 @@ export async function POST(req) {
       speakingRate = 1.0,
       volumeGain = 0.0,
       playWithoutSaving = false,
-      ssml = false, // Flag to indicate SSML input
+      ssml = false,
     } = body;
 
-    // Validate SSML input if ssml flag is true
-    if (ssml) {
-      if (!text.startsWith('<speak>') || !text.endsWith('</speak>')) {
-        throw new Error('Invalid SSML input. SSML text must start with <speak> and end with </speak>.');
-      }
+    if (ssml && (!text.startsWith('<speak>') || !text.endsWith('</speak>'))) {
+      throw new Error('Invalid SSML input. Must start with <speak> and end with </speak>.');
     }
 
     const ttsClient = getTTSClient();
 
-    // Configure the TTS request
     const ttsRequest = {
-      input: ssml ? { ssml: text } : { text }, // Use SSML or plain text
-      voice: { name: voice, languageCode },
+      input: ssml ? { ssml: text } : { text },
+      voice: { name: voice, languageCode: languageCode || extractedLanguageCode },
       audioConfig: {
-        audioEncoding: 'MP3',
-        speakingRate: 1.0,
-        pitch: 0,
-        volumeGainDb: 0,
-        sampleRateHertz: 24000,
+        audioEncoding: format,
+        speakingRate,
+        pitch,
+        volumeGainDb: volumeGain,
+        sampleRateHertz,
       },
     };
 
-    console.log('🔧 TTS Request:', JSON.stringify(ttsRequest, null, 2));
-
-    // Call the Google Text-to-Speech API
+    const extractedLanguageCode = voice.split('-').slice(0, 2).join('-');
     const [ttsResponse] = await ttsClient.synthesizeSpeech(ttsRequest);
-
-    // Save the audio file locally
     await fsPromises.writeFile(outputPath, ttsResponse.audioContent, 'binary');
-    console.log('✅ Audio file written to:', outputPath);
+    const audioBase64 = ttsResponse.audioContent.toString('base64');
+    const fileName = path.basename(outputPath);
 
     if (playWithoutSaving) {
-      // Return the audio as Base64 without saving to Google Drive
-      const audioBase64 = ttsResponse.audioContent.toString('base64');
       return NextResponse.json({
         message: 'Audio generated successfully (without saving).',
         audioBase64,
+        fileName,
       });
     }
 
-    // Upload the audio file to Google Drive
     const auth = new google.auth.GoogleAuth({
       keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
       scopes: ['https://www.googleapis.com/auth/drive.file'],
@@ -76,13 +66,12 @@ export async function POST(req) {
     const drive = google.drive({ version: 'v3', auth });
 
     const fileMetadata = {
-      name: path.basename(outputPath), // Name of the file in Google Drive
-      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID], // Google Drive folder ID
+      name: fileName,
+      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
     };
-
     const media = {
       mimeType: 'audio/mpeg',
-      body: fs.createReadStream(outputPath), // Use the correct fs module
+      body: fs.createReadStream(outputPath),
     };
 
     const driveResponse = await drive.files.create({
@@ -91,32 +80,23 @@ export async function POST(req) {
       fields: 'id, webViewLink, webContentLink',
     });
 
-    console.log('🌐 File uploaded to Google Drive:', driveResponse.data);
-
-    // Return the public URL to the client
     return NextResponse.json({
       message: 'Audio generated successfully.',
+      audioBase64,
       fileId: driveResponse.data.id,
       webViewLink: driveResponse.data.webViewLink,
       webContentLink: driveResponse.data.webContentLink,
+      fileName,
     });
   } catch (error) {
     console.error('❌ Error in /api/tts:', error);
-
-    // Clean up the temporary file if it exists
     try {
-      if (fs.existsSync(outputPath)) {
-        await fsPromises.unlink(outputPath);
-      }
+      if (fs.existsSync(outputPath)) await fsPromises.unlink(outputPath);
     } catch (cleanupError) {
-      console.warn('Failed to clean up temporary file:', cleanupError.message);
+      console.warn('Cleanup failed:', cleanupError.message);
     }
-
     return NextResponse.json(
-      {
-        error: error.message,
-        context: 'Error occurred during TTS processing. Please check your input or try again later.',
-      },
+      { error: error.message, context: 'TTS generation failed.' },
       { status: 500 }
     );
   }

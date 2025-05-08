@@ -68,7 +68,7 @@ const VoiceListPreview = ({ apiEndpoint = "/api/tts" }) => {
       <ul className={styles.voiceListContainer}>
         {sortedVoices.map((voice) => (
           <li key={voice.name} className={styles.voiceListItem}>
-            <span>{voice.formattedName}</span>
+            <span style={{ color: voice.color }}>{voice.formattedName}</span>
             <button onClick={() => handlePreview(voice.name)}>▶️ Preview</button>
             <button onClick={() => toggleFavorite(voice.name)}>
               {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
