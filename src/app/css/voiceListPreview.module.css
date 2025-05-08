@@ -1,85 +1,97 @@
 .voiceListContainer {
-    list-style: none;
-    padding: 0;
-  }
-  
-  .voiceListItem {
-    margin-bottom: 10px;
-    cursor: pointer;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-  }
-  
-  .voiceListItemFavorite {
-    background-color: #fffae6;
-  }
-  
-  .voiceName {
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-  
-  .voiceNameLoading {
-    text-decoration: underline;
-  }
-  
-  .supportedFeatures {
-    font-size: 0.9rem;
-    color: gray;
-    margin-top: 5px;
-  }
-  
-  .favoriteButton {
-    margin-left: 10px;
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    padding: 5px 10px;
-    cursor: pointer;
-  }
-  .favoriteButton:hover {
-    background-color: #e6e6e6;
-  }
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-around;
+}
 
-  .voiceListContainer {
-    display: flex;
-    flex-wrap: wrap; /* Allows items to wrap into rows/columns */
-    gap: 10px; /* Space between items */
-  }
-  
-  .voiceListItem {
-    display: flex;
-    align-items: center;
-    width: 150px; /* Total width for voice output and button */
-    height: 50px; /* Fixed height */
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-    justify-content: space-between;
-  }
-  
-  .voiceName {
-    width: 100px; /* Fixed width for the voice output */
-    height: 50px; /* Fixed height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-  }
-  
-  .favoriteButton {
-    width: 50px; /* Fixed width */
-    height: 50px; /* Fixed height */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  
-  .favoriteButton:hover {
-    background-color: #e0e0e0;
-  }
+.voiceListItem {
+  margin-bottom: 10px;
+  cursor: pointer;
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background-color: #f9f9f9; /* Lighter background */
+  transition: all 0.3s ease;
+  width: 200px; /* Set a width for consistency */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.voiceListItem:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.voiceListItemFavorite {
+  background-color: #fffae6;
+}
+
+.voiceName {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-align: center;
+  cursor: pointer; /* Indicates that the name is clickable */
+}
+
+.voiceName:hover {
+  text-decoration: underline; /* Optional: underline on hover */
+  color: #007bff; /* Optional: change color on hover */
+}
+
+.voiceNameLoading {
+  text-decoration: underline;
+  color: #999; /* For the loading effect */
+}
+
+.supportedFeatures {
+  font-size: 0.9rem;
+  color: gray;
+  margin-top: 5px;
+  text-align: center;
+}
+
+.favoriteButton {
+  margin-top: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.favoriteButton:hover {
+  background-color: #e6e6e6;
+}
+
+.voiceListItem button {
+  background-color: #4CAF50; /* Green background */
+  border: none;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.voiceListItem button:hover {
+  background-color: #45a049;
+}
+
+.voiceListItem button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+

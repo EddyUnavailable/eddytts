@@ -1,4 +1,3 @@
-// app/hooks/useVoices.js
 import { useEffect, useState } from "react";
 
 export function useVoices(apiEndpoint = "/api/tts/voices") {
@@ -61,6 +60,7 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
     fetchVoices();
   }, [apiEndpoint]);
 
+  // Initialize favorites from localStorage when the component mounts
   useEffect(() => {
     const savedFavorites = localStorage.getItem('favorites');
     if (savedFavorites) {
@@ -68,16 +68,25 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
     }
   }, []);
 
+  // Store favorites in localStorage whenever the state changes
   useEffect(() => {
-    localStorage.setItem('favorites', JSON.stringify(favorites));
+    if (favorites.length > 0) {
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
   }, [favorites]);
 
+  // Function to toggle the favorite state
   const toggleFavorite = (voiceName) => {
-    setFavorites(prev =>
-      prev.includes(voiceName)
-        ? prev.filter(name => name !== voiceName)
-        : [...prev, voiceName]
-    );
+    setFavorites((prevFavorites) => {
+      const newFavorites = prevFavorites.includes(voiceName)
+        ? prevFavorites.filter((name) => name !== voiceName) // Remove from favorites
+        : [...prevFavorites, voiceName]; // Add to favorites
+
+      // Immediately sync the new state with localStorage
+      localStorage.setItem('favorites', JSON.stringify(newFavorites));
+
+      return newFavorites;
+    });
   };
 
   return { voices, favorites, toggleFavorite, loading, error };
