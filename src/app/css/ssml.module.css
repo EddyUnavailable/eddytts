@@ -1,0 +1,47 @@
+.container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #4CAF50;
+  }
+  
+  .subtitle {
+    font-size: 1.8rem;
+    margin-top: 20px;
+    color: #333;
+  }
+  
+  .section {
+    margin-bottom: 30px;
+  }
+  
+  .paragraph {
+    font-size: 1.1rem;
+    line-height: 1.6;
+  }
+  
+  .list {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  
+  .listItem {
+    margin-bottom: 10px;
+  }
+  
+  .example {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    margin-top: 10px;
+  }
+  

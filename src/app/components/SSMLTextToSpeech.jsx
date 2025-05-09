@@ -1,27 +1,19 @@
-"use client";
-import React, { useState, useEffect, useRef } from 'react';
+'use client';
+import React, { useState, useRef } from 'react';
 import { useVoices } from '../hooks/useVoices';
-import styles from '../css/textToSpeech.module.css';
+import styles from '../css/textToSpeech.module.css'; // Importing the new CSS module
 
 const SSMLTextToSpeech = () => {
   const { voices, loading, error } = useVoices();
-  const [selectedVoice, setSelectedVoice] = useState("");
-  const [ssmlText, setSsmlText] = useState("");
+  const [selectedVoice, setSelectedVoice] = useState('');
+  const [ssmlText, setSsmlText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [audioUrl, setAudioUrl] = useState("");
+  const [audioUrl, setAudioUrl] = useState('');
   const audioRef = useRef(null);
-
-  const handleVoiceChange = (e) => {
-    setSelectedVoice(e.target.value);
-  };
-
-  const handleSSMLTextChange = (e) => {
-    setSsmlText(e.target.value);
-  };
 
   const handlePlay = async () => {
     if (!selectedVoice || !ssmlText.trim()) {
-      alert("Please select a voice and enter SSML text.");
+      alert("Please select a voice and enter SSML.");
       return;
     }
 
@@ -33,14 +25,15 @@ const SSMLTextToSpeech = () => {
         ? selectedVoiceObj.languageCodes[0]
         : 'en-US';
 
-      // Wrap the SSML text in <speak> tags if it's not already wrapped
-      const formattedSSML = `<speak>${ssmlText}</speak>`;
+      const formattedSSML = ssmlText.trim().startsWith('<speak>') && ssmlText.trim().endsWith('</speak>')
+        ? ssmlText.trim()
+        : `<speak>${ssmlText.trim()}</speak>`;
 
       const response = await fetch('/api/tts/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: formattedSSML,  // Send SSML to the backend
+          text: formattedSSML,
           voice: selectedVoice,
           languageCode,
           playWithoutSaving: true,
@@ -52,7 +45,6 @@ const SSMLTextToSpeech = () => {
         const errorText = await response.text();
         console.error("Server returned error:", errorText);
         alert("Server error while generating speech.");
-        setIsGenerating(false);
         return;
       }
 
@@ -61,17 +53,10 @@ const SSMLTextToSpeech = () => {
       if (data.audioBase64) {
         const dataUri = `data:audio/mpeg;base64,${data.audioBase64}`;
         setAudioUrl(dataUri);
-
-        if (audioRef.current) {
-          audioRef.current.load();
-          audioRef.current.onloadeddata = () => {
-            audioRef.current.play().catch((err) => {
-              console.error("Playback failed:", err);
-            });
-          };
-        }
+        audioRef.current?.load();
+        audioRef.current?.play().catch((err) => console.error("Playback failed:", err));
       } else {
-        alert("No audio returned from server.");
+        alert("No audio returned.");
       }
     } catch (err) {
       console.error(err);
@@ -85,58 +70,60 @@ const SSMLTextToSpeech = () => {
   if (error) return <p>Error loading voices: {error.message}</p>;
 
   return (
-    <div className={styles.content}>
-      <div className={styles.controls}>
-        <label htmlFor="voiceSelect" className={styles.label}>
-          Choose a voice:
-        </label>
+    <div className={styles.container}>
+      {/* Left half: SSML textarea and controls */}
+      <div className={styles.leftColumn}>
         <select
-          id="voiceSelect"
-          className={styles.selectVoice}
           value={selectedVoice}
-          onChange={handleVoiceChange}
-          aria-label="Select a voice"
+          onChange={(e) => setSelectedVoice(e.target.value)}
+          className={styles.select}
         >
           <option value="" disabled>Select a voice</option>
           {voices.map((voice) => (
-            <option key={voice.name} value={voice.name} style={{ color: voice.color }}>
+            <option key={voice.name} value={voice.name}>
               {voice.formattedName || voice.name} ({voice.languageCode})
             </option>
           ))}
         </select>
-      </div>
 
-      <div className={styles.textInput}>
-        <label htmlFor="ssmlInput" className={styles.label}>
-          Enter SSML text:
-        </label>
         <textarea
-          id="ssmlInput"
           value={ssmlText}
-          onChange={handleSSMLTextChange}
-          placeholder="Enter SSML to convert to speech"
-          aria-label="SSML text to convert to speech"
+          onChange={(e) => setSsmlText(e.target.value)}
+          placeholder="Enter SSML here (e.g. <speak>Hi!</speak>)"
           className={styles.textarea}
         />
-      </div>
 
-      <div className={styles.buttonGroup}>
         <button
           onClick={handlePlay}
           disabled={!selectedVoice || !ssmlText.trim() || isGenerating}
-          className={styles.playButton}
+          className={styles.button}
         >
           {isGenerating ? 'Processing...' : 'Play'}
         </button>
+
+        {audioUrl && (
+          <audio ref={audioRef} controls src={audioUrl} />
+        )}
       </div>
 
-      {audioUrl && (
-        <div className={styles.audioControls}>
-          <audio ref={audioRef} controls src={audioUrl} className={styles.audioPlayer}>
-            Your browser does not support the audio element.
-          </audio>
-        </div>
-      )}
+      {/* Right half: SSML usage info */}
+      <div className={styles.rightColumn}>
+        <h3>SSML Guide</h3>
+        <ul>
+          <li><code>&lt;speak&gt;...&lt;/speak&gt;</code>: Wrap your SSML</li>
+          <li><code>&lt;break time="500ms"/&gt;</code>: Pause for 500ms</li>
+          <li><code>&lt;emphasis level="strong"&gt;text&lt;/emphasis&gt;</code>: Emphasize words</li>
+          <li><code>&lt;prosody pitch="+5%" rate="slow"&gt;text&lt;/prosody&gt;</code>: Change tone/speed</li>
+          <li><code>&lt;say-as interpret-as="characters"&gt;HTML&lt;/say-as&gt;</code>: Spell out text</li>
+        </ul>
+        <p>Example:</p>
+        <pre className={styles.codeBlock}>
+          {`<speak>
+  Hello there! <break time="500ms"/>
+  <emphasis level="strong">Welcome</emphasis> to SSML.
+</speak>`}
+        </pre>
+      </div>
     </div>
   );
 };

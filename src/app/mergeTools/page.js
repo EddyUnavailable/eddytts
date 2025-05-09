@@ -1,5 +1,4 @@
-// pages/index.js
-import styles from '../css/mergeTool.module.css';
+import styles from '../css/page.module.css';
 
 const tools = [
   {
@@ -8,7 +7,7 @@ const tools = [
     api: 'No',
     signup: 'Yes',
     allowance: 'Free tier with limited exports',
-    description: 'Online design tool that allows merging MP3s and images into video presentations.'
+    description: 'Online design tool for creating graphics, presentations, and social media posts. You can merge MP3s and images into video presentations with ease.'
   },
   {
     name: 'Kapwing',
@@ -16,7 +15,7 @@ const tools = [
     api: 'Limited',
     signup: 'Optional',
     allowance: 'Free exports with watermark',
-    description: 'Online video editor with timeline editing and AI-powered features.'
+    description: 'Online video editor with timeline editing and AI-powered features. Offers tools for merging images, audio, and video content for easy video creation.'
   },
   {
     name: 'VEED.IO',
@@ -24,7 +23,7 @@ const tools = [
     api: 'Limited',
     signup: 'Yes',
     allowance: 'Free with watermark, 720p export',
-    description: 'Video editor supporting audio, images, subtitles, and waveform generation.'
+    description: 'A user-friendly online video editor that allows combining images, audio, and text. It includes features for adding subtitles and generating audio waveforms.'
   },
   {
     name: 'Clipchamp',
@@ -32,7 +31,7 @@ const tools = [
     api: 'No',
     signup: 'Yes',
     allowance: 'Free tier available, includes watermark',
-    description: 'Microsoft-owned video editor supporting image/audio merging in timeline.'
+    description: 'Microsoft-owned video editor that enables users to combine images and audio within a timeline. Basic features are available for free, but premium features require a subscription.'
   },
   {
     name: 'Descript',
@@ -40,7 +39,7 @@ const tools = [
     api: 'No',
     signup: 'Yes',
     allowance: 'Free plan with limited transcription time',
-    description: 'Desktop app for AI-powered video/audio editing and audiogram creation.'
+    description: 'AI-powered video and audio editing software. Best known for its transcription features, it can also create audiograms, making it a great tool for content creators.'
   },
   {
     name: 'Google Photos',
@@ -48,7 +47,7 @@ const tools = [
     api: 'No',
     signup: 'Yes (Google account)',
     allowance: 'Unlimited basic use',
-    description: 'Photo/movie creation tool with audio background support on mobile and web.'
+    description: 'Google Photos allows users to create photo and movie projects by combining images and audio. It supports basic editing features and is available on mobile and web.'
   },
   {
     name: 'ffmpeg',
@@ -56,7 +55,23 @@ const tools = [
     api: 'N/A (CLI)',
     signup: 'No',
     allowance: 'Fully free and open-source',
-    description: 'Command-line tool to combine images and audio into video files without watermark.'
+    description: 'A powerful command-line tool for video and audio processing. It allows merging MP3 files with images to create videos without any watermark, and it supports advanced video editing commands.'
+  },
+  {
+    name: 'Shotcut',
+    link: 'https://shotcut.org',
+    api: 'No',
+    signup: 'No',
+    allowance: 'Fully free and open-source',
+    description: 'Open-source video editor that provides a wide range of video editing features. Shotcut supports combining images and audio into a video and includes advanced features like filters, transitions, and multi-track editing.'
+  },
+  {
+    name: 'OpenShot',
+    link: 'https://www.openshot.org',
+    api: 'No',
+    signup: 'No',
+    allowance: 'Fully free and open-source',
+    description: 'Another open-source video editor that supports audio and image merging. OpenShot is known for its simplicity and offers drag-and-drop editing with support for 3D animations, transitions, and audio syncing.'
   },
 ];
 

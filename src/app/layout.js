@@ -21,6 +21,7 @@ export default function RootLayout({ children }) {
               <Link href="/aiList">A.I</Link>
               <Link href="/possibleFeatures">Possible Features</Link>
               <Link href="/mergeTools">Merge Tools</Link>
+              <Link href="/ssml">SSML Help</Link>
             </nav>
           </header>
           <main className={styles.main}>{children}</main>

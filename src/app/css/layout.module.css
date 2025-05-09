@@ -1,17 +1,70 @@
+/* layout.module.css */
 
+.header {
+  padding: 1rem;
+  background-color: #f0f0f0;
+}
 
-  .header {
-    padding: 1rem;
-    background-color: #f0f0f0;
-  }
+.nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.main {
+  padding: 2rem;
   
-  .nav {
-    display: flex;
-    gap: 1rem;
-  }
+  box-sizing: border-box;
   
-  .main {
-    padding: 2rem;
-  }
+}
 
- 
+.container {
+  display: flex;
+  height: 100%;
+  gap: 20px;
+}
+
+.leftPane, .rightPane {
+  width: 45%;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.middlePane {
+  width: 10%;
+  height: 100%;
+  padding: 20px;
+  border: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+}
+
+.rightPane {
+  overflow-y: auto;
+  gap: 20px;
+  background-color: #f9f9f9;
+  height: 100%;
+}
+
+.col {
+  border: 1px solid #000;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+}
+
+.audioPlayerContainer {
+  margin-bottom: 20px;
+}
+
+.voiceListContainer,
+.favoritesContainer {
+  overflow-y: auto;
+  max-height: 100%;
+  flex-grow: 1;
+}

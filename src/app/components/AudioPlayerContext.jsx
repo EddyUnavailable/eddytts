@@ -108,23 +108,28 @@ export function AudioPlayerProvider({ children }) {
   }, []);
 
   return (
-  <AudioPlayerContext.Provider value={{
-    playBase64,
-    pause,
-    resume,
-    stop,
-    setVolume,
-    isPlaying,
-    isLoading,
-    error,
-    currentAudio,
-  }}>
-    {children}
-    <div className={styles.audioPlayerContainer}>
-      <audio ref={audioRef} controls />
-    </div>
-  </AudioPlayerContext.Provider>
-);
+    <AudioPlayerContext.Provider value={{
+      playBase64,
+      pause,
+      resume,
+      stop,
+      setVolume,
+      isPlaying,
+      isLoading,
+      error,
+      currentAudio,
+    }}>
+      {children}
+      {/* Only render audio player when there is an audio to play */}
+      {currentAudio && (
+        <div className={styles.audioPlayerContainer}>
+          <audio ref={audioRef} controls>
+            <source src={`data:audio/mpeg;base64,${currentAudio}`} type="audio/mpeg" />
+          </audio>
+        </div>
+      )}
+    </AudioPlayerContext.Provider>
+  );
 }
 
 export const useAudioPlayer = () => useContext(AudioPlayerContext);
