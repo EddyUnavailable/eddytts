@@ -6,33 +6,39 @@ export default function TestPage() {
   const [loading, setLoading] = useState(false);
 
   const testVoicePreview = async () => {
+    if (loading) return; // Prevent multiple requests while loading
+    
     setLoading(true);
     setResult('');
-  
+
     try {
       const response = await fetch('/api/tts/preview', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           voice: 'en-US-Studio-O',
-          languageCode: 'en-US'
+          languageCode: 'en-US',
         }),
       });
-  
+
       const data = await response.json();
       console.log('API Response:', data);
-  
+
       if (!response.ok) {
         throw new Error(data.error || data.message || 'Failed to generate preview');
       }
-  
+
       if (!data.audioBase64) {
         setResult('❌ No audioBase64 returned. Please check the API response.');
       } else {
         const audio = new Audio(`data:audio/mpeg;base64,${data.audioBase64}`);
         audio.onerror = () => setResult('❌ Failed to play the audio.');
-        audio.play();
-        setResult('✅ Audio preview played successfully.');
+        audio.play()
+          .then(() => setResult('✅ Audio preview played successfully.'))
+          .catch((err) => {
+            console.error('Audio playback error:', err);
+            setResult('❌ Failed to play the audio.');
+          });
       }
     } catch (err) {
       console.error('❌ Error:', err.message);
@@ -41,7 +47,7 @@ export default function TestPage() {
       setLoading(false);
     }
   };
-  
+
   return (
     <div style={{ padding: '2rem' }}>
       <h1>Test Audio Preview</h1>

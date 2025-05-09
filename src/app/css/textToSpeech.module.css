@@ -141,3 +141,14 @@
 .audioSamples {
   margin-top: 20px;
 }
+.audioControls {
+  margin-top: 1rem;
+}
+
+.downloadLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: #0070f3;
+  text-decoration: underline;
+  cursor: pointer;
+}

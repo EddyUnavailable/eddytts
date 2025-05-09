@@ -60,20 +60,34 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
     fetchVoices();
   }, [apiEndpoint]);
 
-  // Initialize favorites from localStorage when the component mounts
+  // Initialize favorites from localStorage when the component mounts (only runs on client side)
   useEffect(() => {
+  if (typeof window !== "undefined") {
     const savedFavorites = localStorage.getItem('favorites');
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites));
+    try {
+      if (savedFavorites) {
+        setFavorites(JSON.parse(savedFavorites));
+        console.log("Loaded favorites from localStorage:", savedFavorites); // Debug log
+      }
+    } catch (error) {
+      console.error("Error parsing favorites from localStorage:", error);
+      localStorage.removeItem('favorites'); // In case there's malformed data
     }
-  }, []);
+  }
+}, []);
 
-  // Store favorites in localStorage whenever the state changes
-  useEffect(() => {
+useEffect(() => {
+  if (typeof window !== "undefined") {
     if (favorites.length > 0) {
-      localStorage.setItem('favorites', JSON.stringify(favorites));
+      console.log("Saving favorites to localStorage:", favorites); // Debug log
+      try {
+        localStorage.setItem('favorites', JSON.stringify(favorites));
+      } catch (error) {
+        console.error("Error saving favorites to localStorage:", error);
+      }
     }
-  }, [favorites]);
+  }
+}, [favorites]);// Store favorites whenever they change
 
   // Function to toggle the favorite state
   const toggleFavorite = (voiceName) => {
@@ -82,10 +96,7 @@ export function useVoices(apiEndpoint = "/api/tts/voices") {
         ? prevFavorites.filter((name) => name !== voiceName) // Remove from favorites
         : [...prevFavorites, voiceName]; // Add to favorites
 
-      // Immediately sync the new state with localStorage
-      localStorage.setItem('favorites', JSON.stringify(newFavorites));
-
-      return newFavorites;
+      return newFavorites; // This triggers the effect to update localStorage
     });
   };
 

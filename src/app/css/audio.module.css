@@ -1,0 +1,107 @@
+.audioControlPanel {
+  /* Ensure the control panel is placed correctly above the voice preview */
+  position: relative;
+  margin-bottom: 20px; /* Add some space between controls and voice preview */
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.buttonControls {
+  display: flex;
+  gap: 10px;
+}
+
+.playPauseButton,
+.stopButton {
+  padding: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.playPauseButton {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.playPauseButton:hover {
+  background-color: #45a049;
+}
+
+.stopButton {
+  background-color: #f44336;
+  color: white;
+}
+
+.stopButton:hover {
+  background-color: #e53935;
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.progressBar {
+  width: 100%;
+}
+
+.volumeControl {
+  margin-top: 15px;
+}
+
+.volumeSlider {
+  width: 100%;
+}
+
+.volumePercentage {
+  margin-left: 10px;
+  font-size: 0.9rem;
+}
+
+.statusContainer {
+  margin-top: 15px;
+}
+
+.playingIndicator,
+.pausedIndicator {
+  font-size: 1rem;
+  color: #007bff;
+}
+
+.loadingIndicator {
+  font-size: 1rem;
+  color: gray;
+}
+
+.errorMessage {
+  margin-top: 20px;
+  color: #d00;
+  font-weight: bold;
+  background: #fee;
+  padding: 10px 15px;
+  border: 1px solid #f99;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.audioPlayerContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin-top: 1rem;
+  }
+  
+  .audioPlayerContainer audio {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .hiddenAudio {
+  display: none;
+}

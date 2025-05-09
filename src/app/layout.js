@@ -1,17 +1,14 @@
-import Link from 'next/link';
-import './globals.css';
-import styles from './css/layout.module.css'; // ✅ Import the CSS module
-import { AudioPlayerProvider } from './components/AudioPlayerContext';
+'use client';
 
-export const metadata = {
-  title: 'TTS AI Explorer',
-  description: 'Explore free text-to-speech AI tools',
-};
+import './globals.css';
+import styles from './css/layout.module.css'; // Adjust path if needed
+import Link from 'next/link';
+import { AudioPlayerProvider } from './components/AudioPlayerContext'; // Adjust this path as necessary
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>
+      <body className={styles.body}>
         <AudioPlayerProvider>
           <header className={styles.header}>
             <nav className={styles.nav}>
@@ -24,7 +21,16 @@ export default function RootLayout({ children }) {
               <Link href="/ssml">SSML Help</Link>
             </nav>
           </header>
-          <main className={styles.main}>{children}</main>
+
+          <main className={styles.main}>
+            <div className={styles.leftPane}>
+              {/* Optional: Add sidebar or extra navigation */}
+            </div>
+
+            <div className={styles.rightPane}>
+              {children}
+            </div>
+          </main>
         </AudioPlayerProvider>
       </body>
     </html>

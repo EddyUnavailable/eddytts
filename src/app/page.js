@@ -1,9 +1,10 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import styles from './css/layout.module.css';
 import VoiceListPreview from './components/VoiceListPreview';
 import { useVoices } from './hooks/useVoices';
-import AudioControlPanel from './components/GeneratedAudio';
+import AudioControlPanel from './components/AudioControlPanel';
 import TextToSpeech from './components/TextToSpeech';
 import SSMLTextToSpeech from './components/SSMLTextToSpeech';
 import { useFavorites } from './hooks/useFavorites';
@@ -49,7 +50,7 @@ export default function HomePage() {
 
       <div className={styles.middlePane}>
         <div className={styles.col}>
-          <h4>Favourites</h4>
+          <h4 className={styles.title}>Favourites</h4>
         </div>
         <ul className={styles.favoritesContainer}>
           {favorites.length > 0 ? (
@@ -69,7 +70,7 @@ export default function HomePage() {
       </div>
 
       <div className={styles.rightPane}>
-        <AudioControlPanel />
+        <AudioControlPanel showProgress={true} />
         {loading && <p>Loading voices...</p>}
         {error && <p>Error: {error}</p>}
         {!loading && !error && (

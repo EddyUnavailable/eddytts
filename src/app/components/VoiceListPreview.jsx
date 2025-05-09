@@ -1,95 +1,87 @@
-'use client';
-import React, { useState, useEffect, useMemo } from "react";
-import styles from "../css/voiceListPreview.module.css";
+"use client";
+import React, { useState } from "react";
 import { useAudioPlayer } from "./AudioPlayerContext";
+import styles from "../css/voiceListPreview.module.css";
 
-const VoiceListPreview = ({ voices, favorites, toggleFavorite, apiEndpoint = "/api/tts" }) => {
-  const [loading, setLoading] = useState(false);
-  const [currentVoice, setCurrentVoice] = useState(null);
-  const [activeAudio, setActiveAudio] = useState(null);
-  const { playBase64 } = useAudioPlayer();
-
-  useEffect(() => {
-    return () => {
-      if (activeAudio) {
-        activeAudio.pause();
-        activeAudio.currentTime = 0;
-      }
-    };
-  }, [activeAudio]);
-
-  const sortedVoices = useMemo(() => {
-    if (!voices) return [];
-    return [...voices].sort((a, b) =>
-      a.formattedName.localeCompare(b.formattedName)
-    );
-  }, [voices]);
+const VoiceListPreview = ({ voices = [], favorites = [], toggleFavorite }) => {
+  const [loadingVoice, setLoadingVoice] = useState(null);
+  const [error, setError] = useState(null);
+  const { playBase64, stop } = useAudioPlayer();
 
   const handlePreview = async (voiceName) => {
-    if (loading) return;
+  if (loadingVoice) return;
 
-    const selectedVoiceObj = voices.find((voice) => voice.name === voiceName);
-    if (!selectedVoiceObj) {
-      console.error("Selected voice not found:", voiceName);
-      return;
+  const selectedVoice = voices.find((v) => v.name === voiceName);
+  if (!selectedVoice) {
+    setError("Voice not found.");
+    return;
+  }
+
+  setLoadingVoice(voiceName);
+  setError(null);
+  stop(); // Stop previous audio
+
+  try {
+    // Wait 1 second before continuing (give time to clear audio)
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    console.log(`Requesting preview for voice: ${voiceName}`);
+
+    const response = await fetch(`/api/tts/preview`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        voice: voiceName,
+        languageCode: selectedVoice.languageCodes[0],
+        text: "This is a voice preview.",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch audio preview. Status: ${response.status}`);
     }
 
-    const languageCode = selectedVoiceObj.languageCodes[0];
-
-    console.log("Starting preview for:", voiceName); // Debugging line
-    setLoading(true);
-    setCurrentVoice(voiceName);
-
-    try {
-      const response = await fetch(`${apiEndpoint}/preview`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.NEXT_PUBLIC_TTS_API_KEY,
-        },
-        body: JSON.stringify({
-          voice: voiceName,
-          languageCode,
-          text: "This is a voice preview.",
-        }),
-      });
-
-      const data = await response.json();
-      console.log("Preview data received:", data); // Debugging line
-      if (data.audioBase64) {
-        playBase64(data.audioBase64);
-      } else {
-        console.error("No audio data received");
-      }
-    } catch (error) {
-      console.error("Preview error:", error);
-    } finally {
-      setLoading(false);
-      setCurrentVoice(null);
+    const data = await response.json();
+    if (data.audioBase64) {
+      console.log("Base64 audio data received:", data.audioBase64);
+      await playBase64(data.audioBase64);
+    } else {
+      throw new Error("No audio data received");
     }
-  };
+
+  } catch (err) {
+    console.error("Preview failed:", err);
+    setError("Failed to preview voice");
+  } finally {
+    setLoadingVoice(null);
+  }
+};
 
   return (
     <div>
       <h2>Voice Preview List</h2>
+      {error && <div className={styles.errorMessage}>{error}</div>}
       <ul className={styles.voiceListContainer}>
-        {sortedVoices.map((voice) => (
+        {voices.map((voice) => (
           <li key={voice.name} className={styles.voiceListItem}>
             <span
-              style={{ color: voice.color, cursor: "pointer" }}
+              className={styles.voiceName}
               onClick={() => handlePreview(voice.name)}
             >
               {voice.formattedName}
             </span>
-            <button onClick={() => toggleFavorite(voice.name)}>
+
+            <button className={styles.butfav} onClick={() => toggleFavorite(voice.name)}>
               {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
             </button>
-            {currentVoice === voice.name && loading && (
-              <span>Loading preview...</span> // Show loading text when previewing
-            )}
+
+            {loadingVoice === voice.name && <span className={styles.loadingText}>Loading...</span>}
           </li>
         ))}
       </ul>
+      {!voices.length && <p>No voices available.</p>}
     </div>
   );
 };

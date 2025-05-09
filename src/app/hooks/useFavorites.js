@@ -1,23 +1,40 @@
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
+
+function favoritesReducer(state, action) {
+  switch (action.type) {
+    case "LOAD":
+      return action.payload;
+    case "TOGGLE":
+      return state.includes(action.payload)
+        ? state.filter((name) => name !== action.payload)
+        : [...state, action.payload];
+    default:
+      return state;
+  }
+}
 
 export function useFavorites() {
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, dispatch] = useReducer(favoritesReducer, []);
 
+  // Load favorites from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem("favorites");
-    if (saved) setFavorites(JSON.parse(saved));
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("favorites");
+      if (saved) {
+        dispatch({ type: "LOAD", payload: JSON.parse(saved) });
+      }
+    }
   }, []);
 
+  // Save favorites to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(favorites));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+    }
   }, [favorites]);
 
   const toggleFavorite = (voiceName) => {
-    setFavorites((prev) =>
-      prev.includes(voiceName)
-        ? prev.filter((name) => name !== voiceName)
-        : [...prev, voiceName]
-    );
+    dispatch({ type: "TOGGLE", payload: voiceName });
   };
 
   return { favorites, toggleFavorite };

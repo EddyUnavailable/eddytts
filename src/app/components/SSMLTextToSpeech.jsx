@@ -12,60 +12,67 @@ const SSMLTextToSpeech = () => {
   const audioRef = useRef(null);
 
   const handlePlay = async () => {
-    if (!selectedVoice || !ssmlText.trim()) {
-      alert("Please select a voice and enter SSML.");
+  if (!selectedVoice || !ssmlText.trim()) {
+    alert("Please select a voice and enter SSML.");
+    return;
+  }
+
+  setIsGenerating(true);
+
+  try {
+    const selectedVoiceObj = voices.find((v) => v.name === selectedVoice);
+    const languageCode = Array.isArray(selectedVoiceObj?.languageCodes)
+      ? selectedVoiceObj.languageCodes[0]
+      : 'en-US';
+
+    const formattedSSML = ssmlText.trim().startsWith('<speak>') && ssmlText.trim().endsWith('</speak>')
+      ? ssmlText.trim()
+      : `<speak>${ssmlText.trim()}</speak>`;
+
+    const response = await fetch('/api/tts/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: formattedSSML,
+        voice: selectedVoice,
+        languageCode,
+        playWithoutSaving: true,
+        ssml: true,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      const errorData = JSON.parse(errorText);
+
+      // Check for the specific SSML error message
+      if (errorData.error && errorData.error.includes("This voice currently does not support SSML")) {
+        alert("This voice does not support SSML. Please try with text-only input.");
+      } else {
+        alert("Server error while generating speech.");
+      }
+
+      console.error("Server returned error:", errorText);
       return;
     }
 
-    setIsGenerating(true);
+    const data = await response.json();
 
-    try {
-      const selectedVoiceObj = voices.find((v) => v.name === selectedVoice);
-      const languageCode = Array.isArray(selectedVoiceObj?.languageCodes)
-        ? selectedVoiceObj.languageCodes[0]
-        : 'en-US';
-
-      const formattedSSML = ssmlText.trim().startsWith('<speak>') && ssmlText.trim().endsWith('</speak>')
-        ? ssmlText.trim()
-        : `<speak>${ssmlText.trim()}</speak>`;
-
-      const response = await fetch('/api/tts/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: formattedSSML,
-          voice: selectedVoice,
-          languageCode,
-          playWithoutSaving: true,
-          ssml: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Server returned error:", errorText);
-        alert("Server error while generating speech.");
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.audioBase64) {
-        const dataUri = `data:audio/mpeg;base64,${data.audioBase64}`;
-        setAudioUrl(dataUri);
-        audioRef.current?.load();
-        audioRef.current?.play().catch((err) => console.error("Playback failed:", err));
-      } else {
-        alert("No audio returned.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to generate speech.");
-    } finally {
-      setIsGenerating(false);
+    if (data.audioBase64) {
+      const dataUri = `data:audio/mpeg;base64,${data.audioBase64}`;
+      setAudioUrl(dataUri);
+      audioRef.current?.load();
+      audioRef.current?.play().catch((err) => console.error("Playback failed:", err));
+    } else {
+      alert("No audio returned.");
     }
-  };
-
+  } catch (err) {
+    console.error(err);
+    alert("Failed to generate speech.");
+  } finally {
+    setIsGenerating(false);
+  }
+};
   if (loading) return <p>Loading voices...</p>;
   if (error) return <p>Error loading voices: {error.message}</p>;
 
@@ -101,9 +108,16 @@ const SSMLTextToSpeech = () => {
           {isGenerating ? 'Processing...' : 'Play'}
         </button>
 
-        {audioUrl && (
-          <audio ref={audioRef} controls src={audioUrl} />
-        )}
+              {audioUrl && (
+        <div className={styles.audioControls}>
+          <audio ref={audioRef} controls src={audioUrl}>
+            Your browser does not support the audio element.
+          </audio>
+          <a href={audioUrl} download="tts-audio.mp3" className={styles.downloadLink}>
+            Download Audio
+          </a>
+        </div>
+      )}
       </div>
 
       {/* Right half: SSML usage info */}

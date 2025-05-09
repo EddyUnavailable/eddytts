@@ -1,21 +1,23 @@
+/* Container for the voice list */
 .voiceListContainer {
   list-style: none;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px;
   justify-content: space-around;
 }
 
+/* Style for each voice item */
 .voiceListItem {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   cursor: pointer;
   padding: 15px;
   border: 2px solid #ddd;
   border-radius: 10px;
   background-color: #f9f9f9; /* Lighter background */
   transition: all 0.3s ease;
-  width: 200px; /* Set a width for consistency */
+  width: 220px; /* Consistent width */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -23,33 +25,40 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Hover effect on list items */
 .voiceListItem:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
+/* Additional style when a voice is marked as a favorite */
 .voiceListItemFavorite {
-  background-color: #fffae6;
+  background-color: #fffae6; /* Highlight background for favorites */
 }
 
+/* Style for the voice name */
 .voiceName {
   font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 10px;
   text-align: center;
-  cursor: pointer; /* Indicates that the name is clickable */
+  cursor: pointer;
+  transition: color 0.3s ease;
 }
 
+/* Hover effect on the voice name */
 .voiceName:hover {
-  text-decoration: underline; /* Optional: underline on hover */
-  color: #007bff; /* Optional: change color on hover */
+  text-decoration: underline;
+  color: #007bff; /* Change color on hover */
 }
 
+/* Loading text when previewing a voice */
 .voiceNameLoading {
   text-decoration: underline;
   color: #999; /* For the loading effect */
 }
 
+/* Style for the supported features text */
 .supportedFeatures {
   font-size: 0.9rem;
   color: gray;
@@ -57,6 +66,7 @@
   text-align: center;
 }
 
+/* Style for the favorite button */
 .favoriteButton {
   margin-top: 10px;
   background-color: #f0f0f0;
@@ -71,6 +81,7 @@
   background-color: #e6e6e6;
 }
 
+/* Style for the main action button */
 .voiceListItem button {
   background-color: #4CAF50; /* Green background */
   border: none;
@@ -86,12 +97,39 @@
   transition: background-color 0.3s ease;
 }
 
+/* Hover effect on the button */
 .voiceListItem button:hover {
   background-color: #45a049;
 }
 
+/* Disabled button styles */
 .voiceListItem button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
+/* Loading indicator for when a voice is being previewed */
+.loadingText {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Error message style */
+.errorMessage {
+  margin-top: 20px;
+  color: #d00;
+  font-weight: bold;
+  background: #fee;
+  padding: 10px 15px;
+  border: 1px solid #f99;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.butfav {
+  width: 50px;
+  height: 50px;
+}
