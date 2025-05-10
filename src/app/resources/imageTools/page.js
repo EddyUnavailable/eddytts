@@ -1,4 +1,4 @@
-import styles from '../css/imageTools.module.css';
+import styles from '../../css/resources.module.css';
 
 const tools = [
   {
@@ -85,8 +85,13 @@ const tools = [
 
 export default function ImageToolsPage() {
   return (
-    <div>
-      <h1>Top 10 Free AI Image Generators</h1>
+    <div className={styles.container}>
+      <div className={styles.headerBox}>
+        <h1 className={styles.heading}>Top 10 Free AI Image Generators</h1>
+        <p className={styles.intro}>
+          These tools let you generate images from text prompts using AI. Many offer generous free tiers and support various creative styles from photorealistic to abstract.
+        </p>
+      </div>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -102,7 +107,11 @@ export default function ImageToolsPage() {
           {tools.map((tool) => (
             <tr key={tool.name}>
               <td>{tool.name}</td>
-              <td><a href={tool.link} target="_blank" rel="noopener noreferrer">Visit</a></td>
+              <td>
+                <a href={tool.link} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                  Visit
+                </a>
+              </td>
               <td>{tool.api}</td>
               <td>{tool.signUp}</td>
               <td>{tool.usage}</td>

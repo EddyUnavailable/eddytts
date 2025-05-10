@@ -34,11 +34,10 @@ export default function RootLayout({ children }) {
                 </SignedOut>
                 {/* <SignIn /> */}
                 <Link className={styles.navBut} href="/">Home</Link>
-                <Link className={styles.navBut} href="/ttsList">TTS List</Link>
-                <Link className={styles.navBut} href="/imageTools">Image Tools</Link>
-                <Link className={styles.navBut} href="/aiList">A.I</Link>
+                <Link className={styles.navBut} href="/resources">Resources</Link>
+                
                 <Link className={styles.navBut} href="/possibleFeatures">Possible Features</Link>
-                <Link className={styles.navBut} href="/mergeTools">Merge Tools</Link>
+                
                 <Link className={styles.navBut} href="/ssml">SSML Help</Link>
               </nav>
             </header>
