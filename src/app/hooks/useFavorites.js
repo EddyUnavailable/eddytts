@@ -1,4 +1,4 @@
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, useRef } from "react";
 
 function favoritesReducer(state, action) {
   switch (action.type) {
@@ -15,20 +15,26 @@ function favoritesReducer(state, action) {
 
 export function useFavorites() {
   const [favorites, dispatch] = useReducer(favoritesReducer, []);
+  const loaded = useRef(false);
 
-  // Load favorites from localStorage on mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("favorites");
+      console.log("[Favorites] Loaded from localStorage:", saved);
       if (saved) {
-        dispatch({ type: "LOAD", payload: JSON.parse(saved) });
+        try {
+          dispatch({ type: "LOAD", payload: JSON.parse(saved) });
+        } catch (err) {
+          console.error("Failed to parse favorites:", err);
+        }
       }
+      loaded.current = true;
     }
   }, []);
 
-  // Save favorites to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && loaded.current) {
+      console.log("[Favorites] Saving to localStorage:", favorites);
       localStorage.setItem("favorites", JSON.stringify(favorites));
     }
   }, [favorites]);

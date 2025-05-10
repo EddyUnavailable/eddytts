@@ -44,8 +44,8 @@ export default function HomePage() {
         </div>
         <div className={styles.ttsWrapper}>
           <div className={styles.coltts}>
-            {currentComponent === 'TextToSpeech' && <TextToSpeech />}
-            {currentComponent === 'SSMLTextToSpeech' && <SSMLTextToSpeech />}
+            {currentComponent === 'TextToSpeech' && <TextToSpeech favorites={favorites} />}
+            {currentComponent === 'SSMLTextToSpeech' && <SSMLTextToSpeech favorites={favorites} />}
           </div>
           <div className={styles.ttshelp}>
             <h3>SSML Guide</h3>
