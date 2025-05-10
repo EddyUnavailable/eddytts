@@ -1,28 +1,74 @@
+.vlpWrapper {
+  display: flex;
+  flex-direction: column;
+  padding-left: 10px;
+  padding-right: 10px;
+  gap: 0;
+  color: var(--color-font1);
+}
+
+.vlpTitle {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  height: 50px;
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+  border: 1px solid var(--color-border);
+}
+.vlpTitleText {
+  display: flex;
+  height: 40px;
+  margin-top: 10px;
+  justify-content: center;
+  align-content: center;
+  
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.voiceError{
+  display: flex;
+  height: 50px;
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+  border: 1px solid var(--color-border);
+}
+
+
 /* Container for the voice list */
 .voiceListContainer {
   list-style: none;
-  padding: 0;
+  padding-left: 10px;
+  padding-right: 10px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  justify-content: space-around;
+  /* width: 150px; */
+  height: 500px;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  overflow-y: auto;
 }
+
 
 /* Style for each voice item */
 .voiceListItem {
   margin-bottom: 20px;
   cursor: pointer;
   padding: 15px;
-  border: 2px solid #ddd;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background-color: #f9f9f9; /* Lighter background */
   transition: all 0.3s ease;
-  width: 220px; /* Consistent width */
+  width: 150px; /* Consistent width */
+  height: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px var(--color-border);
 }
 
 /* Hover effect on list items */
@@ -66,18 +112,9 @@
   text-align: center;
 }
 
-/* Style for the favorite button */
-.favoriteButton {
-  margin-top: 10px;
-  background-color: #f0f0f0;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-  padding: 5px 10px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
 
-.favoriteButton:hover {
+
+.butFav:hover {
   background-color: #e6e6e6;
 }
 
@@ -85,7 +122,7 @@
 .voiceListItem button {
   background-color: #4CAF50; /* Green background */
   border: none;
-  color: white;
+  color: var(--color-font1);
   padding: 10px;
   text-align: center;
   text-decoration: none;
@@ -112,14 +149,13 @@
 .loadingText {
   margin-top: 8px;
   font-size: 0.85rem;
-  color: #888;
+  color: var(--color-font1);
   font-style: italic;
   text-align: center;
 }
 
 /* Error message style */
 .errorMessage {
-  margin-top: 20px;
   color: #d00;
   font-weight: bold;
   background: #fee;
@@ -129,7 +165,8 @@
   text-align: center;
 }
 
-.butfav {
+.butFav {
+  margin-right: 0;
   width: 50px;
   height: 50px;
 }

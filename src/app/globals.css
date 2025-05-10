@@ -1,5 +1,16 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg1: rgb(0, 0, 50);
+  --color-bg2: rgb(0, 0, 75);
+  --color-bg3: rgb(0, 0, 100);
+  --color-bg4: rgb(0, 0, 125);
+  --color-font1: rgb(125, 200, 0);
+  --color-font2: rgb(0, 200, 75);
+  --color-font3: rgb(0, 250, 100);
+  --color-font4: rgb(0, 250, 125);
+  --color-button1: rgb(0, 0, 50);
+  --color-button2: rgb(0, 0, 50);
+  --color-button3: rgb(0, 0, 50);
+  --color-button4: rgb(0, 0, 50);
+  --color-border: rgb(0, 0, 0);
 }
 

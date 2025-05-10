@@ -25,7 +25,7 @@ const VoiceListPreview = ({ voices = [], favorites = [], toggleFavorite }) => {
     // Wait 1 second before continuing (give time to clear audio)
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    console.log(`Requesting preview for voice: ${voiceName}`);
+    // console.log(`Requesting preview for voice: ${voiceName}`);
 
     const response = await fetch(`/api/tts/preview`, {
       method: "POST",
@@ -45,7 +45,7 @@ const VoiceListPreview = ({ voices = [], favorites = [], toggleFavorite }) => {
 
     const data = await response.json();
     if (data.audioBase64) {
-      console.log("Base64 audio data received:", data.audioBase64);
+      // console.log("Base64 audio data received:", data.audioBase64);
       await playBase64(data.audioBase64);
     } else {
       throw new Error("No audio data received");
@@ -61,27 +61,35 @@ const VoiceListPreview = ({ voices = [], favorites = [], toggleFavorite }) => {
 
   return (
     <div>
-      <h2>Voice Preview List</h2>
-      {error && <div className={styles.errorMessage}>{error}</div>}
-      <ul className={styles.voiceListContainer}>
-        {voices.map((voice) => (
-          <li key={voice.name} className={styles.voiceListItem}>
-            <span
-              className={styles.voiceName}
-              onClick={() => handlePreview(voice.name)}
-            >
-              {voice.formattedName}
-            </span>
+      <div className={styles.vlpWrapper}>
+        <div className={styles.vlpTitle}>
+          <h2 className={styles.vlpTitleText}>Voice Preview List</h2>
+        </div>
+        <div className={styles.voiceError}>
+        {error && <div className={styles.errorMessage}>{error}</div>}
+        </div>
+        <ul className={styles.voiceListContainer}>
+          {voices.map((voice) => (
+            <li key={voice.name} className={styles.voiceListItem}>
+              <span
+                className={styles.voiceName}
+                style={{ color: voice.color }}
+                onClick={() => handlePreview(voice.name)}
+              >
+                {voice.formattedName}
+              </span>
 
-            <button className={styles.butfav} onClick={() => toggleFavorite(voice.name)}>
-              {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
-            </button>
+              <button className={styles.butFav} onClick={() => toggleFavorite(voice.name)}>
+                {favorites.includes(voice.name) ? "★ Remove" : "☆ Add"}
+              </button>
 
-            {loadingVoice === voice.name && <span className={styles.loadingText}>Loading...</span>}
-          </li>
-        ))}
-      </ul>
-      {!voices.length && <p>No voices available.</p>}
+              {loadingVoice === voice.name && <span className={styles.loadingText}>Loading...</span>}
+            </li>
+          ))}
+        </ul>
+        {!voices.length && <p>No voices available.</p>}
+      
+      </div>
     </div>
   );
 };
