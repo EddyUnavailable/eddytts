@@ -37,19 +37,42 @@ export default function HomePage() {
   return (
     <div className={styles.container}>
       <div className={styles.leftPane}>
-        <div className={styles.col}>
+        <div className={styles.leftTittle}>
           <button onClick={toggleComponent}>
             Switch to {currentComponent === 'TextToSpeech' ? 'SSML Editor' : 'Text-to-Speech'}
           </button>
         </div>
-        <div className={styles.col}>
-          {currentComponent === 'TextToSpeech' && <TextToSpeech />}
-          {currentComponent === 'SSMLTextToSpeech' && <SSMLTextToSpeech />}
-        </div>
+        <div className={styles.ttsWrapper}>
+          <div className={styles.coltts}>
+            {currentComponent === 'TextToSpeech' && <TextToSpeech />}
+            {currentComponent === 'SSMLTextToSpeech' && <SSMLTextToSpeech />}
+          </div>
+          <div className={styles.ttshelp}>
+            <h3>SSML Guide</h3>
+            <ul>
+              <li><code>&lt;speak&gt;...&lt;/speak&gt;</code>: Wrap your SSML</li>
+              <li><code>&lt;break time="500ms"/&gt;</code>: Pause for 500ms</li>
+              <li><code>&lt;emphasis level="strong"&gt;text&lt;/emphasis&gt;</code>: Emphasize words</li>
+              <li><code>&lt;prosody pitch="+5%" rate="slow"&gt;text&lt;/prosody&gt;</code>: Change tone/speed</li>
+              <li><code>&lt;say-as interpret-as="characters"&gt;HTML&lt;/say-as&gt;</code>: Spell out text</li>
+            </ul>
+            <p>Example:</p>
+            <pre className={styles.codeBlock}>
+            {`<speak>
+Hello there! <break time="500ms"/>
+<emphasis level="strong">Welcome</emphasis>
+ to SSML.
+</speak>`}
+        </pre>
+      
+
+          </div>
+        </div >
+
       </div>
 
       <div className={styles.middlePane}>
-        <div className={styles.col}>
+        <div className={styles.middleTitle}>
           <h4 className={styles.title}>Favourites</h4>
         </div>
         <ul className={styles.favoritesContainer}>

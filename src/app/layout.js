@@ -12,24 +12,20 @@ export default function RootLayout({ children }) {
         <AudioPlayerProvider>
           <header className={styles.header}>
             <nav className={styles.nav}>
-              <Link href="/">Home</Link>
-              <Link href="/ttsList">TTS List</Link>
-              <Link href="/imageTools">Image Tools</Link>
-              <Link href="/aiList">A.I</Link>
-              <Link href="/possibleFeatures">Possible Features</Link>
-              <Link href="/mergeTools">Merge Tools</Link>
-              <Link href="/ssml">SSML Help</Link>
+              <Link className={styles.navBut} href="/">Home</Link>
+              <Link className={styles.navBut} href="/ttsList">TTS List</Link>
+              <Link className={styles.navBut} href="/imageTools">Image Tools</Link>
+              <Link className={styles.navBut} href="/aiList">A.I</Link>
+              <Link className={styles.navBut} href="/possibleFeatures">Possible Features</Link>
+              <Link className={styles.navBut} href="/mergeTools">Merge Tools</Link>
+              <Link className={styles.navBut} href="/ssml">SSML Help</Link>
             </nav>
           </header>
 
           <main className={styles.main}>
-            <div className={styles.leftPane}>
-              {/* Optional: Add sidebar or extra navigation */}
-            </div>
-
-            <div className={styles.rightPane}>
+            
               {children}
-            </div>
+           
           </main>
         </AudioPlayerProvider>
       </body>

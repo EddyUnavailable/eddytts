@@ -78,8 +78,7 @@ const SSMLTextToSpeech = () => {
 
   return (
     <div className={styles.container}>
-      {/* Left half: SSML textarea and controls */}
-      <div className={styles.leftColumn}>
+      <div className={styles.voiceSelect}>
         <select
           value={selectedVoice}
           onChange={(e) => setSelectedVoice(e.target.value)}
@@ -92,52 +91,38 @@ const SSMLTextToSpeech = () => {
             </option>
           ))}
         </select>
-
+      </div>
+      <div className={styles.voiceText}>
         <textarea
           value={ssmlText}
           onChange={(e) => setSsmlText(e.target.value)}
           placeholder="Enter SSML here (e.g. <speak>Hi!</speak>)"
           className={styles.textarea}
         />
-
+      </div>
+      <div className={styles.voicebutton}>
         <button
           onClick={handlePlay}
           disabled={!selectedVoice || !ssmlText.trim() || isGenerating}
-          className={styles.button}
+          className={styles.button150}
         >
-          {isGenerating ? 'Processing...' : 'Play'}
+          {isGenerating ? 'Processing...' : 'Submit'}
         </button>
-
+      </div>
+      <div className={styles.voicePlayer}>
               {audioUrl && (
         <div className={styles.audioControls}>
           <audio ref={audioRef} controls src={audioUrl}>
             Your browser does not support the audio element.
           </audio>
-          <a href={audioUrl} download="tts-audio.mp3" className={styles.downloadLink}>
+          <a href={audioUrl} download="tts-audio.mp3" className={styles.button150}>
             Download Audio
           </a>
         </div>
       )}
       </div>
 
-      {/* Right half: SSML usage info */}
-      <div className={styles.rightColumn}>
-        <h3>SSML Guide</h3>
-        <ul>
-          <li><code>&lt;speak&gt;...&lt;/speak&gt;</code>: Wrap your SSML</li>
-          <li><code>&lt;break time="500ms"/&gt;</code>: Pause for 500ms</li>
-          <li><code>&lt;emphasis level="strong"&gt;text&lt;/emphasis&gt;</code>: Emphasize words</li>
-          <li><code>&lt;prosody pitch="+5%" rate="slow"&gt;text&lt;/prosody&gt;</code>: Change tone/speed</li>
-          <li><code>&lt;say-as interpret-as="characters"&gt;HTML&lt;/say-as&gt;</code>: Spell out text</li>
-        </ul>
-        <p>Example:</p>
-        <pre className={styles.codeBlock}>
-          {`<speak>
-  Hello there! <break time="500ms"/>
-  <emphasis level="strong">Welcome</emphasis> to SSML.
-</speak>`}
-        </pre>
-      </div>
+      
     </div>
   );
 };

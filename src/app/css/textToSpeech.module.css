@@ -1,12 +1,31 @@
 /* Container Styling */
 .container {
+  display: flex;
+  flex-direction: column;
   padding: 2rem;
   text-align: center;
-  display: flex;
   height: 100%;
   gap: 20px;
 }
 
+.voiceSelect {
+  width: 45%;
+  height: 50px;
+}
+
+.voiceText {
+  width: 100%;
+  }
+
+.voicePlayer {
+  width: 75%;
+  height: 50px;
+}
+
+.voiceButton {
+  width: 45%;
+  height: 50px;
+}
 /* Content Styling */
 .content {
   display: flex;
@@ -36,34 +55,34 @@
 }
 
 .textarea {
-  padding: 1rem;
+  padding: 10px;
   margin-bottom: 1rem;
-  width: 80%;
-  max-width: 600px;
-  height: 150px;
+  width: 90%;
+  max-width: 900px;
+  height: 250px;
   font-size: 1rem;
   resize: vertical;
 }
 
 /* Button Styling */
 .speakButton,
-.button {
+.button150 {
   padding: 0.5rem 1rem;
   font-size: 1.2rem;
   background-color: #4caf50;
   color: white;
   border: none;
   cursor: pointer;
-  width: 80%;
-  max-width: 200px;
+  width: 150px;
+  height: 40px;
 }
 
 .speakButton:hover,
-.button:hover {
+.button150:hover {
   background-color: #45a049;
 }
 
-.button:disabled {
+.button150:disabled {
   background-color: #ccc;
 }
 
@@ -147,8 +166,13 @@
 
 .downloadLink {
   display: inline-block;
+  justify-content: center;
+  align-items: center;
+  width: 150px;
+  height: 50px;
   margin-top: 0.5rem;
-  color: #0070f3;
+  color: #e2b901;
   text-decoration: underline;
   cursor: pointer;
+  background-color: #45a049;
 }
