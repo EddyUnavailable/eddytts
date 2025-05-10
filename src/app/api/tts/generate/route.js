@@ -2,7 +2,6 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import { google } from 'googleapis';
 import { NextResponse } from 'next/server';
 import { getTTSClient, validateTTSRequest, generateFileName } from './utils';
 
@@ -59,35 +58,14 @@ export async function POST(req) {
       });
     }
 
-    const auth = new google.auth.GoogleAuth({
-      keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-    });
-    const drive = google.drive({ version: 'v3', auth });
-
-    const fileMetadata = {
-      name: fileName,
-      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID],
-    };
-    const media = {
-      mimeType: 'audio/mpeg',
-      body: fs.createReadStream(outputPath),
-    };
-
-    const driveResponse = await drive.files.create({
-      resource: fileMetadata,
-      media,
-      fields: 'id, webViewLink, webContentLink',
-    });
-
+    // The part where we save the file locally instead of uploading it to Google Drive
     return NextResponse.json({
-      message: 'Audio generated successfully.',
+      message: 'Audio generated and saved successfully.',
       audioBase64,
-      fileId: driveResponse.data.id,
-      webViewLink: driveResponse.data.webViewLink,
-      webContentLink: driveResponse.data.webContentLink,
       fileName,
+      filePath: outputPath, // Optionally, send the file path if needed
     });
+
   } catch (error) {
     console.error('❌ Error in /api/tts:', error);
     try {

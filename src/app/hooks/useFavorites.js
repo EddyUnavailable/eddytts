@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef } from "react";
+import { useReducer, useEffect, useRef, useState } from "react";
 
 function favoritesReducer(state, action) {
   switch (action.type) {
@@ -15,7 +15,7 @@ function favoritesReducer(state, action) {
 
 export function useFavorites() {
   const [favorites, dispatch] = useReducer(favoritesReducer, []);
-  const loaded = useRef(false);
+  const [hydrated, setHydrated] = useState(false); // <- Ensures load completes first
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -28,16 +28,16 @@ export function useFavorites() {
           console.error("Failed to parse favorites:", err);
         }
       }
-      loaded.current = true;
+      setHydrated(true);
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && loaded.current) {
+    if (typeof window !== "undefined" && hydrated) {
       console.log("[Favorites] Saving to localStorage:", favorites);
       localStorage.setItem("favorites", JSON.stringify(favorites));
     }
-  }, [favorites]);
+  }, [favorites, hydrated]);
 
   const toggleFavorite = (voiceName) => {
     dispatch({ type: "TOGGLE", payload: voiceName });
