@@ -1,11 +1,13 @@
 .audioControlPanel {
   /* Ensure the control panel is placed correctly above the voice preview */
-  position: relative;
+  /* position: relative; */
   margin-bottom: 20px; /* Add some space between controls and voice preview */
   padding: 15px;
   background-color: #f9f9f9;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 5px #0000001a;
+  border: 5px solid red;
+  width: 200px;
 }
 
 .buttonControls {
